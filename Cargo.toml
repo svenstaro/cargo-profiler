@@ -1,0 +1,15 @@
+[package]
+name = "cargo-profiler"
+version = "0.1.0"
+authors = ["sgururangan-r7 <sgururangan@rapid7.com>"]
+
+[dependencies]
+clap = "*"
+
+[lib]
+name="profiler"
+lib="src/lib.rs"
+
+[[bin]]
+name = "profiler"
+bin='src/main.rs'
