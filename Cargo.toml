@@ -5,6 +5,8 @@ authors = ["sgururangan-r7 <sgururangan@rapid7.com>"]
 
 [dependencies]
 clap = "*"
+regex = "*"
+regex_macros = "*"
 
 [lib]
 name="profiler"
