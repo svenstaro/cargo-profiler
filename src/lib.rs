@@ -4,7 +4,6 @@
 
 extern crate regex;
 extern crate clap;
-
 use std::process::Command;
 use std::collections::HashMap;
 
@@ -98,8 +97,8 @@ impl Parser for Perf {
             }
 
         }
+
         let mut h = HashMap :: new();
-        // PerfOutput.
         for (&x,&y) in words.iter().zip(numbers.iter()) {
             h.insert(x,y);
         }
