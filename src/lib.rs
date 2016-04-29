@@ -32,8 +32,8 @@ impl fmt::Display for Perf {
         write!(f,
             "\t\x1b[32mTask Clock\x1b[0m...{:.1} \t\t \x1b[32mContext Switches\x1b[0m...{:.1}\n\
             \t\x1b[32mCPU Migrations\x1b[0m...{:.1} \t\t \x1b[32mPage Faults\x1b[0m...{:.1}\n\
-            \t\x1b[32mCycles\x1b[0m...{:.1} \t\t\t \x1b[32mInstructions\x1b[0m...{:.1}\n\
-            \t\x1b[32mBranches\x1b[0m...{:.1} \t\t\t \x1b[32mBranch Misses\x1b[0m...{:.1}\n\
+            \t\x1b[32mCycles\x1b[0m...{:.1} \t\t \x1b[32mInstructions\x1b[0m...{:.1}\n\
+            \t\x1b[32mBranches\x1b[0m...{:.1} \t\t \x1b[32mBranch Misses\x1b[0m...{:.1}\n\
             \t\x1b[32mL1-dcache Loads\x1b[0m...{:.1} \t\t \x1b[32mL1-dcache Load Misses\x1b[0m...{:.1}\n\
             \t\x1b[32mLLC Loads\x1b[0m...{:.1} \t\t \x1b[32mLLC Load Misses\x1b[0m...{:.1}\n\
             \t\x1b[32mSeconds\x1b[0m...{:.3}\n\
