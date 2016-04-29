@@ -19,7 +19,12 @@ pub struct Perf {
     instructions : Option<f64>,
     branches : Option<f64>,
     branch_misses : Option<f64>,
-    seconds : Option<f64>
+    seconds : Option<f64>,
+    L1_dcache_loads : Option<f64>,
+    L1_dcache_load_misses : Option<f64>,
+    LLC_loads : Option<f64>,
+    LLC_load_misses : Option<f64>
+
 }
 
 impl fmt::Display for Perf {
@@ -29,6 +34,8 @@ impl fmt::Display for Perf {
             \t\x1b[32mCPU Migrations\x1b[0m...{:.1} \t\t \x1b[32mPage Faults\x1b[0m...{:.1}\n\
             \t\x1b[32mCycles\x1b[0m...{:.1} \t\t\t \x1b[32mInstructions\x1b[0m...{:.1}\n\
             \t\x1b[32mBranches\x1b[0m...{:.1} \t\t\t \x1b[32mBranch Misses\x1b[0m...{:.1}\n\
+            \t\x1b[32mL1-dcache Loads\x1b[0m...{:.1} \t\t \x1b[32mL1-dcache Load Misses\x1b[0m...{:.1}\n\
+            \t\x1b[32mLLC Loads\x1b[0m...{:.1} \t\t \x1b[32mLLC Load Misses\x1b[0m...{:.1}\n\
             \t\x1b[32mSeconds\x1b[0m...{:.3}\
             ",
                     self.task_clock.unwrap_or(std::f64::NAN),
@@ -39,7 +46,13 @@ impl fmt::Display for Perf {
                     self.instructions.unwrap_or(std::f64::NAN),
                     self.branches.unwrap_or(std::f64::NAN),
                     self.branch_misses.unwrap_or(std::f64::NAN),
+                    self.L1_dcache_loads.unwrap_or(std::f64::NAN),
+                    self.L1_dcache_load_misses.unwrap_or(std::f64::NAN),
+                    self.LLC_loads.unwrap_or(std::f64::NAN),
+                    self.LLC_load_misses.unwrap_or(std::f64::NAN),
                     self.seconds.unwrap_or(std::f64::NAN))
+
+
     }
 }
 
@@ -60,7 +73,11 @@ impl Perf {
             instructions : None,
             branches : None,
             branch_misses : None,
-            seconds : None
+            seconds : None,
+            L1_dcache_loads : None,
+            L1_dcache_load_misses : None,
+            LLC_loads : None,
+            LLC_load_misses : None
         }
 
     }
@@ -133,7 +150,11 @@ impl Parser for Perf {
             instructions : h.get("instructions").cloned(),
             branches : h.get("branches").cloned(),
             branch_misses : h.get("branch-misses").cloned(),
-            seconds : h.get("seconds").cloned()
+            seconds : h.get("seconds").cloned(),
+            L1_dcache_loads : h.get("L1_dcache_loads").cloned(),
+            L1_dcache_load_misses : h.get("L1_dcache_load_misses").cloned(),
+            LLC_loads : h.get("LLC_loads").cloned(),
+            LLC_load_misses : h.get("LLC_load_misses").cloned()
         }
 
     }
