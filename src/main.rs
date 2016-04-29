@@ -35,7 +35,7 @@ fn main(){
     let p : Perf = Perf :: new();
     let output = p.cli(binary);
     let parsed = p.parse(&output);
-    printc!(white: "Perf Stat Output:\n\n");
+    printc!(white: "\nPerf Stat Output:\n\n");
 
     println!("{}", parsed)
     // get perf stat output
