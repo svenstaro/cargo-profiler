@@ -36,7 +36,7 @@ impl fmt::Display for Perf {
             \t\x1b[32mBranches\x1b[0m...{:.1} \t\t\t \x1b[32mBranch Misses\x1b[0m...{:.1}\n\
             \t\x1b[32mL1-dcache Loads\x1b[0m...{:.1} \t\t \x1b[32mL1-dcache Load Misses\x1b[0m...{:.1}\n\
             \t\x1b[32mLLC Loads\x1b[0m...{:.1} \t\t \x1b[32mLLC Load Misses\x1b[0m...{:.1}\n\
-            \t\x1b[32mSeconds\x1b[0m...{:.3}\
+            \t\x1b[32mSeconds\x1b[0m...{:.3}\n\
             ",
                     self.task_clock.unwrap_or(std::f64::NAN),
                     self.context_switches.unwrap_or(std::f64::NAN),
