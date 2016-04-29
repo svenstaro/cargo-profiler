@@ -6,7 +6,7 @@ extern crate regex;
 extern crate profiler;
 #[macro_use] extern crate colorify;
 use clap::{Arg, App};
-use profiler::{Perf, Parser};
+use profiler::{Profiler, Parser};
 #[cfg(all(unix, target_os = "linux"))]
 fn main(){
 
@@ -19,26 +19,26 @@ fn main(){
                         .value_name("BINARY")
                         .help("binary you want to profile")
                     )
-                    // arg(Arg::with_name("profiler")
-                    //     .long("profiler")
-                    //     .value_name("PROFILER")
-                    //     .help("what profiler you want to use")
-                    // )
+                    .arg(Arg::with_name("profiler")
+                        .long("profiler")
+                        .value_name("PROFILER")
+                        .help("what profiler you want to use")
+                    )
                     .get_matches();
     let binary = matches.value_of("binary").expect("failed to get argument binary");
-    // let profiler = matches.value_of("profiler").expect("failed to get argument profiler");
-    // let p = match profiler {
-    //     "perf" => Perf::new(),
-    //     "callgrind" =>  CallGrind::new(),
-    //     "cachegrind" =>  CacheGrind::new()
-    // };
-    let p : Perf = Perf :: new();
+    let profiler = matches.value_of("profiler").expect("failed to get argument profiler");
+    let p = match profiler {
+        "perf" => Profiler::new_perf(),
+        // "callgrind" =>  CallGrind::new(),
+        // "cachegrind" => CacheGrind::new()
+        _ => panic!("That profiler doesn't exist. Choose between perf, callgrind, and cachegrind.")
+
+    };
     let output = p.cli(binary);
     let parsed = p.parse(&output);
     printc!(white: "\nPerf Stat Output:\n\n");
-
+    
     println!("{}", parsed)
-    // get perf stat output
 
 
 }
