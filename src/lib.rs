@@ -4,8 +4,10 @@
 
 extern crate regex;
 extern crate clap;
+
 use std::process::Command;
 use std::collections::HashMap;
+use std::fmt;
 
 #[derive(Debug)]
 pub struct Perf {
@@ -20,6 +22,26 @@ pub struct Perf {
     seconds : Option<f64>
 }
 
+impl fmt::Display for Perf {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f,
+            "\t\x1b[32mTask Clock\x1b[0m...{:.1} \t\t \x1b[32mContext Switches\x1b[0m...{:.1}\n\
+            \t\x1b[32mCPU Migrations\x1b[0m...{:.1} \t\t \x1b[32mPage Faults\x1b[0m...{:.1}\n\
+            \t\x1b[32mCycles\x1b[0m...{:.1} \t\t\t \x1b[32mInstructions\x1b[0m...{:.1}\n\
+            \t\x1b[32mBranches\x1b[0m...{:.1} \t\t\t \x1b[32mBranch Misses\x1b[0m...{:.1}\n\
+            \t\x1b[32mSeconds\x1b[0m...{:.3}\
+            ",
+                    self.task_clock.unwrap_or(std::f64::NAN),
+                    self.context_switches.unwrap_or(std::f64::NAN),
+                    self.cpu_migrations.unwrap_or(std::f64::NAN),
+                    self.page_faults.unwrap_or(std::f64::NAN),
+                    self.cycles.unwrap_or(std::f64::NAN),
+                    self.instructions.unwrap_or(std::f64::NAN),
+                    self.branches.unwrap_or(std::f64::NAN),
+                    self.branch_misses.unwrap_or(std::f64::NAN),
+                    self.seconds.unwrap_or(std::f64::NAN))
+    }
+}
 
 pub trait Parser {
     fn cli(&self, binary : &str) -> String;
@@ -51,18 +73,17 @@ impl Parser for Perf {
                                             .arg(binary)
                                             .output()
                                             .unwrap_or_else(|e| {panic!("failed {}", e)});
-        String::from_utf8(perf_stat_output.stderr).unwrap()
+        String::from_utf8(perf_stat_output.stderr).expect("cli error")
 
     }
 
     fn parse(&self, perf_stat_output : &str)-> Perf {
 
         let out : Vec<&str> = perf_stat_output.split("\n").collect();
-        // println!("{:?}", out);
         let mut z = out[3..].to_owned();
-        z.retain(|&x| !x.contains("<not supported>"));
+        z.retain(|&x| !x.contains("<not supported>")& !x.contains("panicked") & !x.contains("failed to read") & !x.contains("Performance"));
         let re = regex!(r"(\d+,\d{3},\d{3})|(\d+,\d{3})|\d+(\.\d+)?");
-        let re1 = regex!(r" [a-zA-Z]+-?[a-zA-Z]+-?[a-zA-Z]+");
+        let re1 = regex!(r" [a-zA-Z]+-?[a-zA-Z]+?-?[a-zA-Z]+");
 
         let mut words : Vec <&str>= Vec :: new();
         let mut numbers : Vec<f64> = Vec :: new();
@@ -79,7 +100,7 @@ impl Parser for Perf {
                         .replace(",","")
                         .parse::<f64>()
                         .ok()
-                        .unwrap()
+                        .expect("f64 error")
                     )
                 }
             }
@@ -104,15 +125,15 @@ impl Parser for Perf {
         }
 
         Perf {
-            task_clock : Some(*h.get("task-clock").unwrap()),
-            context_switches : Some(*h.get("context-switches").unwrap()),
-            cpu_migrations : Some(*h.get("cpu-migrations").unwrap()),
-            page_faults : Some(*h.get("page-faults").unwrap()),
-            cycles : Some(*h.get("cycles").unwrap()),
-            instructions : Some(*h.get("instructions").unwrap()),
-            branches : Some(*h.get("branches").unwrap()),
-            branch_misses : Some(*h.get("branch-misses").unwrap()),
-            seconds : Some(*h.get("seconds").unwrap())
+            task_clock : h.get("task-clock").cloned(),
+            context_switches : h.get("context-switches").cloned(),
+            cpu_migrations :h.get("cpu-migrations").cloned(),
+            page_faults : h.get("page-faults").cloned(),
+            cycles : h.get("cycles").cloned(),
+            instructions : h.get("instructions").cloned(),
+            branches : h.get("branches").cloned(),
+            branch_misses : h.get("branch-misses").cloned(),
+            seconds : h.get("seconds").cloned()
         }
 
     }

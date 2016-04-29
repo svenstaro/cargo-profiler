@@ -4,6 +4,7 @@
 extern crate clap;
 extern crate regex;
 extern crate profiler;
+#[macro_use] extern crate colorify;
 use clap::{Arg, App};
 use profiler::{Perf, Parser};
 #[cfg(all(unix, target_os = "linux"))]
@@ -34,7 +35,9 @@ fn main(){
     let p : Perf = Perf :: new();
     let output = p.cli(binary);
     let parsed = p.parse(&output);
-    println!("{:?}", parsed)
+    printc!(white: "Perf Stat Output:\n\n");
+
+    println!("{}", parsed)
     // get perf stat output
 
 

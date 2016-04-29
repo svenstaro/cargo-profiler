@@ -7,6 +7,7 @@ authors = ["sgururangan-r7 <sgururangan@rapid7.com>"]
 clap = "*"
 regex = "*"
 regex_macros = "*"
+colorify = "0.2"
 
 [lib]
 name="profiler"
