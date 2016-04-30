@@ -100,13 +100,13 @@ impl fmt::Display for Profiler {
 
                                         write!(f,
                                                "\t\x1b[32mTotal I-Cache References\x1b[0m...{:.1} \t\t \x1b[32mL1 I-Cache \
-                                                Misses\x1b[0m...{:.1}\n\t\x1b[32mL1 I-Cache Miss Rate\x1b[0m...{:.1} \t\t \
-                                                \x1b[32mL2 I-Cache Misses\x1b[0m...{:.1}\n\t\x1b[32mL2 I-Cache Miss Rate\x1b[0m...{:.1} \t\t \
+                                                Misses\x1b[0m...{:.1}\n\t\x1b[32mL1 I-Cache Miss Rate\x1b[0m...{:.1}% \t\t \
+                                                \x1b[32mL2 I-Cache Misses\x1b[0m...{:.1}\n\t\x1b[32mL2 I-Cache Miss Rate\x1b[0m...{:.1}% \t\t \
                                                 \x1b[32mTotal D-Cache References\x1b[0m...{:.1}\n\t\x1b[32mL1 D-Cache Misses\x1b[0m...{:.1} \
-                                                \t\t \x1b[32mL1 D-Cache Miss Rate\x1b[0m...{:.1}\n\t\x1b[32mL2 D-Cache \
+                                                \t\t \x1b[32mL1 D-Cache Miss Rate\x1b[0m...{:.1}%\n\t\x1b[32mL2 D-Cache \
                                                 Misses\x1b[0m...{:.1} \t\t \x1b[32mL2 D-Cache \
-                                                Miss Rate\x1b[0m...{:.1}\n\t\x1b[32mTotal L2-Cache References\x1b[0m...{:.1} \t\t \
-                                                \x1b[32mL2 Cache Misses\x1b[0m...{:.1}\n\t\x1b[32mL2 Miss Rate\x1b[0m...{:.3}\n",
+                                                Miss Rate\x1b[0m...{:.1}%\n\t\x1b[32mTotal L2-Cache References\x1b[0m...{:.1} \t\t \
+                                                \x1b[32mL2 Cache Misses\x1b[0m...{:.1}\n\t\x1b[32mL2 Miss Rate\x1b[0m...{:.1}%\n",
                                                i_refs.unwrap_or(std::f64::NAN),
                                                i1_misses.unwrap_or(std::f64::NAN),
                                                i1_miss_rate.unwrap_or(std::f64::NAN),
@@ -276,7 +276,7 @@ impl Parser for Profiler {
 
                 }
                 println!("{:?}", zr);
-                let re = regex!(r"(\d+,\d{3},\d{3})|(\d+,\d{3})|[^\w\d{1}]&\d+(\.\d+)?|\d*\.\d+");
+                let re = regex!(r"(\d+,\d{3},\d{3},\d{3},\d{3})|(\d+,\d{3},\d{3},\d{3})|(\d+,\d{3},\d{3})|(\d+,\d{3})|[^\w\d{1}]&\d+(\.\d+)?|\d*\.\d+");
                 let re1 = regex!(r"[a-zA-Z\d{1}?]+\s*\t*[a-zA-Z\d{1}?]+\s*\t*[a-zA-Z]+:");
 
                 let mut words: Vec<String> = Vec::new();
