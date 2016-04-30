@@ -26,6 +26,22 @@ pub enum Profiler {
         llc_loads: Option<f64>,
         llc_load_misses: Option<f64>,
     },
+
+    CacheGrind {
+        i_refs: Option<f64>,
+        i1_misses: Option<f64>,
+        lli_misses: Option<f64>,
+        i1_miss_rate: Option<f64>,
+        lli_miss_rate: Option<f64>,
+        d_refs: Option<f64>,
+        d1_misses: Option<f64>,
+        d1_miss_rate: Option<f64>,
+        lld_misses: Option<f64>,
+        lld_miss_rate: Option<f64>,
+        ll_refs: Option<f64>,
+        ll_misses: Option<f64>,
+        ll_miss_rate: Option<f64>,
+    },
 }
 
 
@@ -68,6 +84,45 @@ impl fmt::Display for Profiler {
                        llc_load_misses.unwrap_or(std::f64::NAN),
                        seconds.unwrap_or(std::f64::NAN))
             }
+            Profiler::CacheGrind {i_refs,
+                                    i1_misses,
+                                    lli_misses,
+                                    i1_miss_rate,
+                                    lli_miss_rate,
+                                    d_refs,
+                                    d1_misses,
+                                    d1_miss_rate,
+                                    lld_misses,
+                                    lld_miss_rate,
+                                    ll_refs,
+                                    ll_misses,
+                                    ll_miss_rate} => {
+
+                                        write!(f,
+                                               "\t\x1b[32mTotal I-Cache References\x1b[0m...{:.1} \t\t \x1b[32mL1 I-Cache \
+                                                Misses\x1b[0m...{:.1}\n\t\x1b[32mL1 I-Cache Miss Rate\x1b[0m...{:.1} \t\t \
+                                                \x1b[32mL2 I-Cache Misses\x1b[0m...{:.1}\n\t\x1b[32mL2 I-Cache Miss Rate\x1b[0m...{:.1} \t\t \
+                                                \x1b[32mTotal D-Cache References\x1b[0m...{:.1}\n\t\x1b[32mL1 D-Cache Misses\x1b[0m...{:.1} \
+                                                \t\t \x1b[32mL1 D-Cache Miss Rate\x1b[0m...{:.1}\n\t\x1b[32mL2 D-Cache \
+                                                Misses\x1b[0m...{:.1} \t\t \x1b[32mL2 D-Cache \
+                                                Miss Rate\x1b[0m...{:.1}\n\t\x1b[32mTotal L2-Cache References\x1b[0m...{:.1} \t\t \
+                                                \x1b[32mL2 Cache Misses\x1b[0m...{:.1}\n\t\x1b[32mL2 Miss Rate\x1b[0m...{:.3}\n",
+                                               i_refs.unwrap_or(std::f64::NAN),
+                                               i1_misses.unwrap_or(std::f64::NAN),
+                                               i1_miss_rate.unwrap_or(std::f64::NAN),
+                                               lli_misses.unwrap_or(std::f64::NAN),
+                                               lli_miss_rate.unwrap_or(std::f64::NAN),
+                                               d_refs.unwrap_or(std::f64::NAN),
+                                               d1_misses.unwrap_or(std::f64::NAN),
+                                               d1_miss_rate.unwrap_or(std::f64::NAN),
+                                               lld_misses.unwrap_or(std::f64::NAN),
+                                               lld_miss_rate.unwrap_or(std::f64::NAN),
+                                               ll_refs.unwrap_or(std::f64::NAN),
+                                               ll_misses.unwrap_or(std::f64::NAN),
+                                               ll_miss_rate.unwrap_or(std::f64::NAN))
+
+
+            }
         }
 
 
@@ -98,6 +153,23 @@ impl Profiler {
             llc_load_misses: None,
         }
     }
+    pub fn new_cachegrind() -> Profiler {
+        Profiler::CacheGrind {
+            i_refs: None,
+            i1_misses: None,
+            lli_misses:None,
+            i1_miss_rate: None,
+            lli_miss_rate: None,
+            d_refs: None,
+            d1_misses: None,
+            d1_miss_rate: None,
+            lld_misses: None,
+            lld_miss_rate: None,
+            ll_refs: None,
+            ll_misses:None,
+            ll_miss_rate: None,
+        }
+    }
 }
 
 
@@ -113,14 +185,23 @@ impl Parser for Profiler {
                 String::from_utf8(perf_stat_output.stderr).expect("cli error")
 
             }
+            Profiler::CacheGrind { .. } => {
+                let cachegrind_output = Command::new("valgrind")
+                                           .arg("--tool=cachegrind")
+                                           .arg("--cachegrind-out-file=cachegrind.out")
+                                           .arg(binary)
+                                           .output()
+                                           .unwrap_or_else(|e| panic!("failed {}", e));
+                String::from_utf8(cachegrind_output.stderr).expect("cli error")
+            }
         }
 
     }
 
-    fn parse(&self, perf_stat_output: &str) -> Profiler {
+    fn parse(&self, output: &str) -> Profiler {
         match *self {
             Profiler::PerfStat { .. } => {
-                let out: Vec<&str> = perf_stat_output.split("\n").collect();
+                let out: Vec<&str> = output.split("\n").collect();
                 let mut z = out[3..].to_owned();
                 z.retain(|&x| {
                     !x.contains("<not supported>") & !x.contains("panicked") &
@@ -182,7 +263,85 @@ impl Parser for Profiler {
                 }
 
             }
+            Profiler::CacheGrind {..} => {
+                let mut out: Vec<&str> = output.split("\n").collect();
+                out.retain(|&x| {
+                    x.contains("==")
+                });
+                let z = out[6..].to_owned();
+                let r = regex!(r"==\d+==");
+                let mut zr : Vec<String> = Vec :: new();
+                for text in z.iter(){
+                    zr.push(r.replace_all(text, ""));
 
+                }
+                println!("{:?}", zr);
+                let re = regex!(r"(\d+,\d{3},\d{3})|(\d+,\d{3})|[^\w\d{1}]&\d+(\.\d+)?|\d*\.\d+");
+                let re1 = regex!(r"[a-zA-Z\d{1}?]+\s*\t*[a-zA-Z\d{1}?]+\s*\t*[a-zA-Z]+:");
+
+                let mut words: Vec<String> = Vec::new();
+                let mut numbers: Vec<f64> = Vec::new();
+
+                for text in zr.iter() {
+                    if let Some(s) = re.find(text) {
+                        let start = s.0 as usize;
+                        let end = s.1 as usize;
+                        unsafe {
+                            let s = text.slice_unchecked(start, end);
+                            println!("{:?}", s);
+                            numbers.push(s.trim()
+                                          .replace(",", "")
+                                          .parse::<f64>()
+                                          .ok()
+                                          .expect("f64 error"))
+                        }
+                    }
+
+                }
+
+
+                for text in zr.iter() {
+                    if let Some(s) = re1.find(text) {
+                        let start = s.0 as usize;
+                        let end = s.1 as usize;
+                        unsafe {
+
+                            let d = text.slice_unchecked(start, end)
+                                            .trim().to_lowercase()
+                                            .replace(":","")
+                                            .split(" ").collect::<Vec<_>>().join("");
+                            println!("{:?}", d);
+
+                            words.push(d);
+                        }
+                    }
+
+                }
+
+                let mut h = HashMap::new();
+                for (x, &y) in words.iter().zip(numbers.iter()) {
+                    h.insert(x.as_ref(), y);
+                }
+
+
+                Profiler::CacheGrind {
+                    i_refs: h.get("irefs").cloned(),
+                    i1_misses: h.get("i1misses").cloned(),
+                    i1_miss_rate: h.get("i1missrate").cloned(),
+                    lli_misses: h.get("llimisses").cloned(),
+                    lli_miss_rate: h.get("llimissrate").cloned(),
+                    d_refs: h.get("drefs").cloned(),
+                    d1_misses: h.get("d1misses").cloned(),
+                    d1_miss_rate: h.get("d1missrate").cloned(),
+                    lld_misses: h.get("lldmisses").cloned(),
+                    lld_miss_rate: h.get("lldmissrate").cloned(),
+                    ll_refs: h.get("llrefs").cloned(),
+                    ll_misses: h.get("llmisses").cloned(),
+                    ll_miss_rate: h.get("llmissrate").cloned(),
+                }
+
+            }
         }
+
     }
 }

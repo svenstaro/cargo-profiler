@@ -29,13 +29,17 @@ fn main() {
     let p = match profiler {
         "perf" => Profiler::new_perf(),
         // "callgrind" =>  CallGrind::new(),
-        // "cachegrind" => CacheGrind::new()
+        "cachegrind" => Profiler::new_cachegrind(),
         _ => panic!("That profiler doesn't exist. Choose between perf, callgrind, and cachegrind."),
 
     };
     let output = p.cli(binary);
     let parsed = p.parse(&output);
-    printc!(white: "\nPerf Stat Output:\n\n");
+    match profiler {
+        "perf" => printc!(white: "\nPerf Stat Output:\n\n"),
+        "cachegrind" => printc!(white: "\nCacheGrind Output:\n\n"),
+        _ => panic!("That profiler doesn't exist. Choose between perf, callgrind, and cachegrind."),
+    }
 
     println!("{}", parsed)
 
