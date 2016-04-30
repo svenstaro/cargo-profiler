@@ -5,12 +5,13 @@ cargo subcommand to profile binaries
 
 ```
 $ cargo build
-$ ./target/debug/profiler --bin=$BINARY
+$ ./target/debug/profiler --bin=$BINARY --profiler=$PROFILER
 ```
+Currently support perf and cachegrind overall statistics. 
 
 ## TODO
 
-* Pretty print callgrind/cachegrind overall statistics.
+* Pretty print callgrind overall statistics.
 * Zero-in on expensive functions.
   * Print how much of the total instructions they make up.
   * Print the line number of the functions, and/or whether they are internal or external to the library
