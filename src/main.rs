@@ -28,8 +28,8 @@ fn main() {
     let profiler = matches.value_of("profiler").expect("failed to get argument profiler");
     let p = match profiler {
         "perf" => Profiler::new_perf(),
-        // "callgrind" =>  CallGrind::new(),
         "cachegrind" => Profiler::new_cachegrind(),
+        "callgrind" => Profiler::new_callgrind(),
         _ => panic!("That profiler doesn't exist. Choose between perf, callgrind, and cachegrind."),
 
     };
@@ -38,6 +38,7 @@ fn main() {
     match profiler {
         "perf" => printc!(white: "\nPerf Stat Output:\n\n"),
         "cachegrind" => printc!(white: "\nCacheGrind Output:\n\n"),
+        "callgrind" => printc!(white : "\nCallGrind Output: \n\n"),
         _ => panic!("That profiler doesn't exist. Choose between perf, callgrind, and cachegrind."),
     }
 
