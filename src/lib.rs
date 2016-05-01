@@ -84,14 +84,14 @@ impl<'a> fmt::Display for Profiler<'a> {
                                  llc_load_misses,
                                  seconds } => {
                 write!(f,
-                       "\t\x1b[32mTask Clock\x1b[0m...{:.1} \n \x1b[32mContext \
-                        Switches\x1b[0m...{:.1}\n\t\x1b[32mCPU Migrations\x1b[0m...{:.1} \n \
-                        \x1b[32mPage Faults\x1b[0m...{:.1}\n\t\x1b[32mCycles\x1b[0m...{:.1} \n \
-                        \x1b[32mInstructions\x1b[0m...{:.1}\n\t\x1b[32mBranches\x1b[0m...{:.1} \
-                        \n \x1b[32mBranch Misses\x1b[0m...{:.1}\n\t\x1b[32ml1-dcache \
-                        Loads\x1b[0m...{:.1} \n \x1b[32ml1-dcache Load \
-                        Misses\x1b[0m...{:.1}\n\t\x1b[32mllc Loads\x1b[0m...{:.1} \n \
-                        \x1b[32mllc Load Misses\x1b[0m...{:.1}\n\t\x1b[32mSeconds\x1b[0m...{:.3}\n",
+                       "\x1b[32mTask Clock\x1b[0m...{:.1} \n\x1b[32mContext \
+                        Switches\x1b[0m...{:.1}\n\x1b[32mCPU Migrations\x1b[0m...{:.1} \n\
+                        \x1b[32mPage Faults\x1b[0m...{:.1}\n\x1b[32mCycles\x1b[0m...{:.1} \n\
+                        \x1b[32mInstructions\x1b[0m...{:.1}\n\x1b[32mBranches\x1b[0m...{:.1} \
+                        \n\x1b[32mBranch Misses\x1b[0m...{:.1}\n\x1b[32ml1-dcache \
+                        Loads\x1b[0m...{:.1} \n\x1b[32ml1-dcache Load \
+                        Misses\x1b[0m...{:.1}\n\x1b[32mllc Loads\x1b[0m...{:.1} \n\
+                        \x1b[32mllc Load Misses\x1b[0m...{:.1}\n\x1b[32mSeconds\x1b[0m...{:.3}\n",
                        task_clock.unwrap_or(std::f64::NAN),
                        context_switches.unwrap_or(std::f64::NAN),
                        cpu_migrations.unwrap_or(std::f64::NAN),
@@ -120,15 +120,15 @@ impl<'a> fmt::Display for Profiler<'a> {
                                    ll_misses,
                                    ll_miss_rate } => {
                 write!(f,
-                       "\t\x1b[32mTotal I-Cache References\x1b[0m...{:.1} \n \x1b[32mL1 I-Cache \
-                        Misses\x1b[0m...{:.1}\n\t\x1b[32mL1 I-Cache Miss Rate\x1b[0m...{:.1} \n \
-                        \x1b[32mL2 I-Cache Misses\x1b[0m...{:.1}\n\t\x1b[32mL2 I-Cache Miss \
-                        Rate\x1b[0m...{:.1} \n \x1b[32mTotal D-Cache \
-                        References\x1b[0m...{:.1}\n\t\x1b[32mL1 D-Cache Misses\x1b[0m...{:.1} \
-                        \n \x1b[32mL1 D-Cache Miss Rate\x1b[0m...{:.1}\n\t\x1b[32mL2 D-Cache \
-                        Misses\x1b[0m...{:.1} \n \x1b[32mL2 D-Cache Miss \
-                        Rate\x1b[0m...{:.1}\n\t\x1b[32mTotal L2-Cache References\x1b[0m...{:.1} \
-                        \n \x1b[32mL2 Cache Misses\x1b[0m...{:.1}\n\t\x1b[32mL2 Miss \
+                       "\x1b[32mTotal I-Cache References\x1b[0m...{:.1} \n\x1b[32mL1 I-Cache \
+                        Misses\x1b[0m...{:.1}\n\x1b[32mL1 I-Cache Miss Rate\x1b[0m...{:.1} \n\
+                        \x1b[32mL2 I-Cache Misses\x1b[0m...{:.1}\n\x1b[32mL2 I-Cache Miss \
+                        Rate\x1b[0m...{:.1} \n\x1b[32mTotal D-Cache \
+                        References\x1b[0m...{:.1}\n\x1b[32mL1 D-Cache Misses\x1b[0m...{:.1} \
+                        \n\x1b[32mL1 D-Cache Miss Rate\x1b[0m...{:.1}\n\x1b[32mL2 D-Cache \
+                        Misses\x1b[0m...{:.1} \n\x1b[32mL2 D-Cache Miss \
+                        Rate\x1b[0m...{:.1}\n\x1b[32mTotal L2-Cache References\x1b[0m...{:.1} \
+                        \n\x1b[32mL2 Cache Misses\x1b[0m...{:.1}\n\x1b[32mL2 Miss \
                         Rate\x1b[0m...{:.3}\n",
                        i_refs.unwrap_or(std::f64::NAN),
                        i1_misses.unwrap_or(std::f64::NAN),
@@ -165,11 +165,11 @@ impl<'a> fmt::Display for Profiler<'a> {
                                   instruction_9,
                                   funct_9 } => {
                 write!(f,
-                       "\t\x1b[\n32m{:.2}\x1b[0m...{} \n \x1b[\n32m{:.2}\x1b[0m...{} \n \
-                        \x1b[\n32m{:.2}\x1b[0m...{} \n \x1b[\n32m{:.2}\x1b[0m...{} \n \
-                         \x1b[\n32m{:.2}\x1b[0m...{} \n \x1b[\n32m{:.2}\x1b[0m...{} \n \
-                         \x1b[\n32m{:.2}\x1b[0m...{} \n \x1b[\n32m{:.2}\x1b[0m...{} \n \
-                         \x1b[\n32m{:.2}\x1b[0m...{} \n \x1b[\n32m{:.2}\x1b[0m...{} \n\n",
+                       "\x1b[\n32m{:.2}\x1b[0m...{} \n\x1b[\n32m{:.2}\x1b[0m...{} \n\
+                        \x1b[\n32m{:.2}\x1b[0m...{} \n\x1b[\n32m{:.2}\x1b[0m...{} \n\
+                         \x1b[\n32m{:.2}\x1b[0m...{} \n\x1b[\n32m{:.2}\x1b[0m...{} \n\
+                         \x1b[\n32m{:.2}\x1b[0m...{} \n\x1b[\n32m{:.2}\x1b[0m...{} \n\
+                         \x1b[\n32m{:.2}\x1b[0m...{} \n\x1b[\n32m{:.2}\x1b[0m...{} \n\n",
                        instruction_0.unwrap_or(std::f64::NAN),
                        funct_0.unwrap_or("NAN"),
                        instruction_1.unwrap_or(std::f64::NAN),

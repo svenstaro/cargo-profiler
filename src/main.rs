@@ -8,6 +8,8 @@ extern crate profiler;
 extern crate colorify;
 use clap::{Arg, App};
 use profiler::{Profiler, Parser};
+use std::path::Path;
+use std::process::Command;
 #[cfg(all(unix, target_os = "linux"))]
 fn main() {
 
@@ -26,6 +28,8 @@ fn main() {
                       .get_matches();
     let binary = matches.value_of("binary").expect("failed to get argument binary");
     let profiler = matches.value_of("profiler").expect("failed to get argument profiler");
+    assert!(Path::new(binary).exists(),
+            "That binary doesn't exist. Enter a valid path.");
     let p = match profiler {
         "perf" => Profiler::new_perf(),
         "cachegrind" => Profiler::new_cachegrind(),
@@ -42,7 +46,14 @@ fn main() {
         _ => panic!("That profiler doesn't exist. Choose between perf, callgrind, and cachegrind."),
     }
 
-    println!("{}", parsed)
+    println!("{}", parsed);
 
-
+    Command::new("rm")
+        .arg("cachegrind.out")
+        .output()
+        .unwrap_or_else(|e| panic!("failed {}", e));
+    Command::new("rm")
+        .arg("callgrind.out")
+        .output()
+        .unwrap_or_else(|e| panic!("failed {}", e));
 }
