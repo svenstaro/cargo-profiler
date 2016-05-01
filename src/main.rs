@@ -1,6 +1,6 @@
 #![feature(plugin)]
 #![plugin(regex_macros)]
-#![feature(type_ascription)]
+
 extern crate clap;
 extern crate regex;
 extern crate profiler;
@@ -10,13 +10,16 @@ use clap::{Arg, App};
 use profiler::{Profiler, Parser};
 use std::path::Path;
 use std::process::Command;
+
+
 #[cfg(all(unix, target_os = "linux"))]
 fn main() {
 
+    // create profiler application
     let matches = App::new("cargo-profiler")
                       .version("1.0")
                       .author("Suchin Gururangan")
-                      .about("Profile your app")
+                      .about("Profile your binaries")
                       .arg(Arg::with_name("binary")
                                .long("bin")
                                .value_name("BINARY")
@@ -26,10 +29,17 @@ fn main() {
                                .value_name("PROFILER")
                                .help("what profiler you want to use"))
                       .get_matches();
+
+    // read binary argument, make sure it exists in the filesystem
     let binary = matches.value_of("binary").expect("failed to get argument binary");
-    let profiler = matches.value_of("profiler").expect("failed to get argument profiler");
+
     assert!(Path::new(binary).exists(),
             "That binary doesn't exist. Enter a valid path.");
+
+    // read profiler argument
+    let profiler = matches.value_of("profiler").expect("failed to get argument profiler");
+
+    // initialize profiler based on argument
     let p = match profiler {
         "perf" => Profiler::new_perf(),
         "cachegrind" => Profiler::new_cachegrind(),
@@ -37,21 +47,22 @@ fn main() {
         _ => panic!("That profiler doesn't exist. Choose between perf, callgrind, and cachegrind."),
 
     };
-    let output = p.cli(binary);
-    let parsed = p.parse(&output);
-    match profiler {
-        "perf" => printc!(white: "\nPerf Stat Output:\n\n"),
-        "cachegrind" => printc!(white: "\nCacheGrind Output:\n\n"),
-        "callgrind" => printc!(white : "\nCallGrind Output: \n\n"),
-        _ => panic!("That profiler doesn't exist. Choose between perf, callgrind, and cachegrind."),
-    }
 
+    // get the profiler output
+    let output = p.cli(binary);
+
+    // parse the output into struct
+    let parsed = p.parse(&output);
+
+    // pretty-print
     println!("{}", parsed);
 
+    // remove files generated while profiling
     Command::new("rm")
         .arg("cachegrind.out")
         .output()
         .unwrap_or_else(|e| panic!("failed {}", e));
+
     Command::new("rm")
         .arg("callgrind.out")
         .output()

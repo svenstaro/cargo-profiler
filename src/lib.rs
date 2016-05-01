@@ -9,8 +9,9 @@ use std::process::Command;
 use std::collections::HashMap;
 use std::fmt;
 
-
+/// Profiler enum. We have three profilers: PerfStat, CacheGrind, and CallGrind.
 pub enum Profiler<'a> {
+    /// PerfStat holds the parsed objects of `perf stat -d`
     PerfStat {
         task_clock: Option<f64>,
         context_switches: Option<f64>,
@@ -27,6 +28,7 @@ pub enum Profiler<'a> {
         llc_load_misses: Option<f64>,
     },
 
+    /// CachGrind holds the parsed objects of `valgrind --tool=cachegrind -cachegrind-out-file=cachegrind.out`
     CacheGrind {
         i_refs: Option<f64>,
         i1_misses: Option<f64>,
@@ -42,6 +44,8 @@ pub enum Profiler<'a> {
         ll_misses: Option<f64>,
         ll_miss_rate: Option<f64>,
     },
+
+    /// Call holds the parsed objects of `valgrind --tool=callgrind --callgrind-out-file=callgrind.out && cg_annotate callgrind.out`
     CallGrind {
         instruction_0: Option<f64>,
         funct_0: Option<&'a str>,
@@ -66,7 +70,7 @@ pub enum Profiler<'a> {
     },
 }
 
-
+/// Pretty-print the profiler outputs into user-friendly formats.
 impl<'a> fmt::Display for Profiler<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
@@ -85,13 +89,13 @@ impl<'a> fmt::Display for Profiler<'a> {
                                  seconds } => {
                 write!(f,
                        "\x1b[32mTask Clock\x1b[0m...{:.1} \n\x1b[32mContext \
-                        Switches\x1b[0m...{:.1}\n\x1b[32mCPU Migrations\x1b[0m...{:.1} \n\
-                        \x1b[32mPage Faults\x1b[0m...{:.1}\n\x1b[32mCycles\x1b[0m...{:.1} \n\
-                        \x1b[32mInstructions\x1b[0m...{:.1}\n\x1b[32mBranches\x1b[0m...{:.1} \
+                        Switches\x1b[0m...{:.1}\n\x1b[32mCPU Migrations\x1b[0m...{:.1} \
+                        \n\x1b[32mPage Faults\x1b[0m...{:.1}\n\x1b[32mCycles\x1b[0m...{:.1} \
+                        \n\x1b[32mInstructions\x1b[0m...{:.1}\n\x1b[32mBranches\x1b[0m...{:.1} \
                         \n\x1b[32mBranch Misses\x1b[0m...{:.1}\n\x1b[32ml1-dcache \
-                        Loads\x1b[0m...{:.1} \n\x1b[32ml1-dcache Load \
-                        Misses\x1b[0m...{:.1}\n\x1b[32mllc Loads\x1b[0m...{:.1} \n\
-                        \x1b[32mllc Load Misses\x1b[0m...{:.1}\n\x1b[32mSeconds\x1b[0m...{:.3}\n",
+                        Loads\x1b[0m...{:.1} \n \x1b[32ml1-dcache Load \
+                        Misses\x1b[0m...{:.1}\n\x1b[32mllc Loads\x1b[0m...{:.1} \n\x1b[32mllc \
+                        Load Misses\x1b[0m...{:.1}\n\x1b[32mSeconds\x1b[0m...{:.3}\n",
                        task_clock.unwrap_or(std::f64::NAN),
                        context_switches.unwrap_or(std::f64::NAN),
                        cpu_migrations.unwrap_or(std::f64::NAN),
@@ -106,6 +110,7 @@ impl<'a> fmt::Display for Profiler<'a> {
                        llc_load_misses.unwrap_or(std::f64::NAN),
                        seconds.unwrap_or(std::f64::NAN))
             }
+
             Profiler::CacheGrind { i_refs,
                                    i1_misses,
                                    lli_misses,
@@ -144,6 +149,7 @@ impl<'a> fmt::Display for Profiler<'a> {
                        ll_misses.unwrap_or(std::f64::NAN),
                        ll_miss_rate.unwrap_or(std::f64::NAN))
             }
+
             Profiler::CallGrind { instruction_0,
                                   funct_0,
                                   instruction_1,
@@ -200,14 +206,16 @@ impl<'a> fmt::Display for Profiler<'a> {
 
     }
 }
-
+/// Parser trait. To parse the output of Profilers, we first have to get their output from
+/// the command line, and then parse the output into respective structs.
 pub trait Parser {
     fn cli(&self, binary: &str) -> String;
     fn parse<'b>(&'b self, output: &'b str) -> Profiler;
 }
 
-
+/// Initialize the Profilers
 impl<'a> Profiler<'a> {
+    /// Initialize PerfStat
     pub fn new_perf() -> Profiler<'a> {
         Profiler::PerfStat {
             task_clock: None,
@@ -225,6 +233,7 @@ impl<'a> Profiler<'a> {
             llc_load_misses: None,
         }
     }
+    /// Initialize CacheGrind
     pub fn new_cachegrind() -> Profiler<'a> {
         Profiler::CacheGrind {
             i_refs: None,
@@ -242,7 +251,7 @@ impl<'a> Profiler<'a> {
             ll_miss_rate: None,
         }
     }
-
+    /// Initialize CallGrind
     pub fn new_callgrind() -> Profiler<'a> {
         Profiler::CallGrind {
             instruction_0: None,
@@ -271,8 +280,10 @@ impl<'a> Profiler<'a> {
 
 
 impl<'a> Parser for Profiler<'a> {
+    /// Get profiler output from stdout.
     fn cli(&self, binary: &str) -> String {
         match *self {
+
             Profiler::PerfStat { .. } => {
                 let perf_stat_output = Command::new("perf")
                                            .arg("stat")
@@ -283,6 +294,7 @@ impl<'a> Parser for Profiler<'a> {
                 String::from_utf8(perf_stat_output.stderr).expect("cli error")
 
             }
+
             Profiler::CacheGrind { .. } => {
                 let cachegrind_output = Command::new("valgrind")
                                             .arg("--tool=cachegrind")
@@ -292,6 +304,7 @@ impl<'a> Parser for Profiler<'a> {
                                             .unwrap_or_else(|e| panic!("failed {}", e));
                 String::from_utf8(cachegrind_output.stderr).expect("cli error")
             }
+
             Profiler::CallGrind { .. } => {
                 Command::new("valgrind")
                     .arg("--tool=callgrind")
@@ -310,6 +323,7 @@ impl<'a> Parser for Profiler<'a> {
 
     }
 
+    /// Get parse the profiler output into respective structs.
     fn parse<'b>(&'b self, output: &'b str) -> Profiler {
         match *self {
             Profiler::PerfStat { .. } => {
