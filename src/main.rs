@@ -47,7 +47,11 @@ fn main() {
         _ => panic!("That profiler doesn't exist. Choose between perf, callgrind, and cachegrind."),
 
     };
-
+    let path = binary.split("/").collect::<Vec<_>>();
+    let name = path[path.len() - 1];
+    println!("\nProfiling \x1b[1;36m{} \x1b[0mwith \x1b[1;36m{}...",
+             name,
+             profiler);
     // get the profiler output
     let output = p.cli(binary);
 

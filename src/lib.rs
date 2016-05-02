@@ -47,25 +47,36 @@ pub enum Profiler<'a> {
 
     /// Call holds the parsed objects of `valgrind --tool=callgrind --callgrind-out-file=callgrind.out && cg_annotate callgrind.out`
     CallGrind {
+        total_instructions: Option<f64>,
         instruction_0: Option<f64>,
+        instruction_perc_0: Option<f64>,
         funct_0: Option<&'a str>,
         instruction_1: Option<f64>,
+        instruction_perc_1: Option<f64>,
         funct_1: Option<&'a str>,
         instruction_2: Option<f64>,
+        instruction_perc_2: Option<f64>,
         funct_2: Option<&'a str>,
         instruction_3: Option<f64>,
+        instruction_perc_3: Option<f64>,
         funct_3: Option<&'a str>,
         instruction_4: Option<f64>,
+        instruction_perc_4: Option<f64>,
         funct_4: Option<&'a str>,
         instruction_5: Option<f64>,
+        instruction_perc_5: Option<f64>,
         funct_5: Option<&'a str>,
         instruction_6: Option<f64>,
+        instruction_perc_6: Option<f64>,
         funct_6: Option<&'a str>,
         instruction_7: Option<f64>,
+        instruction_perc_7: Option<f64>,
         funct_7: Option<&'a str>,
         instruction_8: Option<f64>,
+        instruction_perc_8: Option<f64>,
         funct_8: Option<&'a str>,
         instruction_9: Option<f64>,
+        instruction_perc_9: Option<f64>,
         funct_9: Option<&'a str>,
     },
 }
@@ -88,7 +99,7 @@ impl<'a> fmt::Display for Profiler<'a> {
                                  llc_load_misses,
                                  seconds } => {
                 write!(f,
-                       "\x1b[32mTask Clock\x1b[0m...{:.1} \n\x1b[32mContext \
+                       "\n\x1b[32mTask Clock\x1b[0m...{:.1} \n\x1b[32mContext \
                         Switches\x1b[0m...{:.1}\n\x1b[32mCPU Migrations\x1b[0m...{:.1} \
                         \n\x1b[32mPage Faults\x1b[0m...{:.1}\n\x1b[32mCycles\x1b[0m...{:.1} \
                         \n\x1b[32mInstructions\x1b[0m...{:.1}\n\x1b[32mBranches\x1b[0m...{:.1} \
@@ -125,7 +136,7 @@ impl<'a> fmt::Display for Profiler<'a> {
                                    ll_misses,
                                    ll_miss_rate } => {
                 write!(f,
-                       "\x1b[32mTotal I-Cache References\x1b[0m...{:.1} \n\x1b[32mL1 I-Cache \
+                       "\n\x1b[32mTotal I-Cache References\x1b[0m...{:.1} \n\x1b[32mL1 I-Cache \
                         Misses\x1b[0m...{:.1}\n\x1b[32mL1 I-Cache Miss Rate\x1b[0m...{:.1} \n\
                         \x1b[32mL2 I-Cache Misses\x1b[0m...{:.1}\n\x1b[32mL2 I-Cache Miss \
                         Rate\x1b[0m...{:.1} \n\x1b[32mTotal D-Cache \
@@ -150,51 +161,73 @@ impl<'a> fmt::Display for Profiler<'a> {
                        ll_miss_rate.unwrap_or(std::f64::NAN))
             }
 
-            Profiler::CallGrind { instruction_0,
+            Profiler::CallGrind { total_instructions,
+                                  instruction_0,
+                                  instruction_perc_0,
                                   funct_0,
                                   instruction_1,
+                                  instruction_perc_1,
                                   funct_1,
                                   instruction_2,
+                                  instruction_perc_2,
                                   funct_2,
                                   instruction_3,
+                                  instruction_perc_3,
                                   funct_3,
                                   instruction_4,
+                                  instruction_perc_4,
                                   funct_4,
                                   instruction_5,
+                                  instruction_perc_5,
                                   funct_5,
                                   instruction_6,
+                                  instruction_perc_6,
                                   funct_6,
                                   instruction_7,
+                                  instruction_perc_7,
                                   funct_7,
                                   instruction_8,
+                                  instruction_perc_8,
                                   funct_8,
                                   instruction_9,
+                                  instruction_perc_9,
                                   funct_9 } => {
                 write!(f,
-                       "\x1b[\n32m{:.2}\x1b[0m...{} \n\x1b[\n32m{:.2}\x1b[0m...{} \n\
-                        \x1b[\n32m{:.2}\x1b[0m...{} \n\x1b[\n32m{:.2}\x1b[0m...{} \n\
-                         \x1b[\n32m{:.2}\x1b[0m...{} \n\x1b[\n32m{:.2}\x1b[0m...{} \n\
-                         \x1b[\n32m{:.2}\x1b[0m...{} \n\x1b[\n32m{:.2}\x1b[0m...{} \n\
-                         \x1b[\n32m{:.2}\x1b[0m...{} \n\x1b[\n32m{:.2}\x1b[0m...{} \n\n",
+                       "\n\x1b[0mTotal Instructions...\x1b[32m{}\x1b[0m\n\nmost expensive functions:\n\x1b[\n32m{}({:.1}%)\x1b[0m...{} \n\x1b[\n32m{}({:.1}%)\x1b[0m...{} \n\
+                        \x1b[\n32m{}({:.1}%)\x1b[0m...{} \n\x1b[\n32m{}({:.1}%)\x1b[0m...{} \n\
+                         \x1b[\n32m{}({:.1}%)\x1b[0m...{} \n\x1b[\n32m{}({:.1}%)\x1b[0m...{} \n\
+                         \x1b[\n32m{}({:.1}%)\x1b[0m...{} \n\x1b[\n32m{}({:.1}%)\x1b[0m...{} \n\
+                         \x1b[\n32m{}({:.1}%)\x1b[0m...{} \n\x1b[\n32m{}({:.1}%)\x1b[0m...{} \n\n",
+                         total_instructions.unwrap_or(std::f64::NAN),
                        instruction_0.unwrap_or(std::f64::NAN),
+                       instruction_perc_0.unwrap_or(std::f64::NAN),
                        funct_0.unwrap_or("NAN"),
                        instruction_1.unwrap_or(std::f64::NAN),
+                       instruction_perc_1.unwrap_or(std::f64::NAN),
                        funct_1.unwrap_or("NAN"),
                        instruction_2.unwrap_or(std::f64::NAN),
+                       instruction_perc_2.unwrap_or(std::f64::NAN),
                        funct_2.unwrap_or("NAN"),
                        instruction_3.unwrap_or(std::f64::NAN),
+                       instruction_perc_3.unwrap_or(std::f64::NAN),
                        funct_3.unwrap_or("NAN"),
                        instruction_4.unwrap_or(std::f64::NAN),
+                       instruction_perc_4.unwrap_or(std::f64::NAN),
                        funct_4.unwrap_or("NAN"),
                        instruction_5.unwrap_or(std::f64::NAN),
+                       instruction_perc_5.unwrap_or(std::f64::NAN),
                        funct_5.unwrap_or("NAN"),
                        instruction_6.unwrap_or(std::f64::NAN),
+                       instruction_perc_6.unwrap_or(std::f64::NAN),
                        funct_6.unwrap_or("NAN"),
                        instruction_7.unwrap_or(std::f64::NAN),
+                       instruction_perc_7.unwrap_or(std::f64::NAN),
                        funct_7.unwrap_or("NAN"),
                        instruction_8.unwrap_or(std::f64::NAN),
+                       instruction_perc_8.unwrap_or(std::f64::NAN),
                        funct_8.unwrap_or("NAN"),
                        instruction_9.unwrap_or(std::f64::NAN),
+                       instruction_perc_9.unwrap_or(std::f64::NAN),
                        funct_9.unwrap_or("NAN"),
                    )
             }
@@ -254,25 +287,36 @@ impl<'a> Profiler<'a> {
     /// Initialize CallGrind
     pub fn new_callgrind() -> Profiler<'a> {
         Profiler::CallGrind {
+            total_instructions: None,
             instruction_0: None,
             funct_0: None,
+            instruction_perc_0: None,
             instruction_1: None,
+            instruction_perc_1: None,
             funct_1: None,
             instruction_2: None,
+            instruction_perc_2: None,
             funct_2: None,
             instruction_3: None,
+            instruction_perc_3: None,
             funct_3: None,
             instruction_4: None,
+            instruction_perc_4: None,
             funct_4: None,
             instruction_5: None,
+            instruction_perc_5: None,
             funct_5: None,
             instruction_6: None,
+            instruction_perc_6: None,
             funct_6: None,
             instruction_7: None,
+            instruction_perc_7: None,
             funct_7: None,
             instruction_8: None,
+            instruction_perc_8: None,
             funct_8: None,
             instruction_9: None,
+            instruction_perc_9: None,
             funct_9: None,
         }
     }
@@ -327,7 +371,7 @@ impl<'a> Parser for Profiler<'a> {
     fn parse<'b>(&'b self, output: &'b str) -> Profiler {
         match *self {
             Profiler::PerfStat { .. } => {
-                let out: Vec<&str> = output.split("\n").collect();
+                let out: Vec<&'b str> = output.split("\n").collect();
                 let mut z = out[3..].to_owned();
                 z.retain(|&x| {
                     !x.contains("<not supported>") & !x.contains("panicked") &
@@ -390,7 +434,7 @@ impl<'a> Parser for Profiler<'a> {
 
             }
             Profiler::CacheGrind { .. } => {
-                let mut out: Vec<&str> = output.split("\n").collect();
+                let mut out: Vec<&'b str> = output.split("\n").collect();
                 out.retain(|&x| x.contains("=="));
                 let z = out[6..].to_owned();
                 let r = regex!(r"==\d+==");
@@ -487,28 +531,58 @@ impl<'a> Parser for Profiler<'a> {
                 }
 
                 let total_instructions = numbers.iter().fold(0.0, |a, b| a + b);
-                let numbers = numbers.iter().map(|x| x / total_instructions).collect::<Vec<f64>>();
 
                 Profiler::CallGrind {
+                    total_instructions: Some(total_instructions),
                     instruction_0: numbers.get(0).cloned(),
+                    instruction_perc_0: numbers.get(0)
+                                               .cloned()
+                                               .map(|x| x / total_instructions as f64 * 100.),
                     funct_0: words.get(0).cloned(),
                     instruction_1: numbers.get(1).cloned(),
+                    instruction_perc_1: numbers.get(1)
+                                               .cloned()
+                                               .map(|x| x / total_instructions as f64 * 100.),
                     funct_1: words.get(1).cloned(),
                     instruction_2: numbers.get(2).cloned(),
+                    instruction_perc_2: numbers.get(2)
+                                               .cloned()
+                                               .map(|x| x / total_instructions as f64 * 100.),
                     funct_2: words.get(2).cloned(),
                     instruction_3: numbers.get(3).cloned(),
+                    instruction_perc_3: numbers.get(3)
+                                               .cloned()
+                                               .map(|x| x / total_instructions as f64 * 100.),
                     funct_3: words.get(3).cloned(),
                     instruction_4: numbers.get(4).cloned(),
+                    instruction_perc_4: numbers.get(4)
+                                               .cloned()
+                                               .map(|x| x / total_instructions as f64 * 100.),
                     funct_4: words.get(4).cloned(),
                     instruction_5: numbers.get(5).cloned(),
+                    instruction_perc_5: numbers.get(5)
+                                               .cloned()
+                                               .map(|x| x / total_instructions as f64 * 100.),
                     funct_5: words.get(5).cloned(),
                     instruction_6: numbers.get(6).cloned(),
+                    instruction_perc_6: numbers.get(6)
+                                               .cloned()
+                                               .map(|x| x / total_instructions as f64 * 100.),
                     funct_6: words.get(6).cloned(),
                     instruction_7: numbers.get(7).cloned(),
+                    instruction_perc_7: numbers.get(7)
+                                               .cloned()
+                                               .map(|x| x / total_instructions as f64 * 100.),
                     funct_7: words.get(7).cloned(),
                     instruction_8: numbers.get(8).cloned(),
+                    instruction_perc_8: numbers.get(8)
+                                               .cloned()
+                                               .map(|x| x / total_instructions as f64 * 100.),
                     funct_8: words.get(8).cloned(),
                     instruction_9: numbers.get(9).cloned(),
+                    instruction_perc_9: numbers.get(9)
+                                               .cloned()
+                                               .map(|x| x / total_instructions as f64 * 100.),
                     funct_9: words.get(9).cloned(),
                 }
             }
