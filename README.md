@@ -7,7 +7,7 @@ cargo subcommand to profile binaries
 $ cargo build
 $ ./target/debug/profiler --bin=$BINARY --profiler=$PROFILER
 ```
-Currently support perf and cachegrind overall statistics. 
+Currently support perf and cachegrind overall statistics, as well as callgrind function records.
 
 ## TODO
 
