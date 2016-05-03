@@ -31,7 +31,7 @@ fn main() {
                       .arg(Arg::with_name("binary")
                                .long("bin")
                                .value_name("BINARY")
-                               .required(true)
+                               .required(false)
                                .help("binary you want to profile"))
                       .subcommand(SubCommand::with_name("callgrind")
                                       .about("gets callgrind features")
