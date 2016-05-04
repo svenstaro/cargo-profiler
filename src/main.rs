@@ -10,7 +10,6 @@ use clap::{Arg, App, SubCommand};
 use profiler::{Profiler, Parser};
 use std::path::Path;
 use std::process::Command;
-use std::io::Write;
 
 macro_rules! println_stderr(
     ($($arg:tt)*) => { {
@@ -42,14 +41,15 @@ fn main() {
                                                .value_name("NUMBER")
                                                .takes_value(true)
                                                .help("number of functions you want")))
-                      .subcommand(SubCommand::with_name("cachegrind")
-                                      .about("gets cachegrind features")
-                                      .version("1.0")
-                                      .author("Suchin Gururangan"))
-                      .subcommand(SubCommand::with_name("perf")
-                                      .about("gets perf features")
-                                      .version("1.0")
-                                      .author("Suchin Gururangan"))
+                                               .subcommand(SubCommand::with_name("cachegrind")
+                                                               .about("gets cachegrind features")
+                                                               .version("1.0")
+                                                               .author("Suchin Gururangan")
+                                                               .arg(Arg::with_name("n")
+                                                                        .short("n")
+                                                                        .value_name("NUMBER")
+                                                                        .takes_value(true)
+                                                                        .help("number of functions you want")))
                       .get_matches();
 
     // read binary argument, make sure it exists in the filesystem
@@ -64,6 +64,7 @@ fn main() {
     if let Some(matches) = matches.subcommand_matches("callgrind") {
         profiler = "callgrind";
         p = Profiler::new_callgrind();
+
         if matches.is_present("n") {
             n = matches.value_of("n").unwrap();
         } else {
@@ -71,15 +72,18 @@ fn main() {
         }
     }
 
-    if let Some(_) = matches.subcommand_matches("cachegrind") {
+    if let Some(matches) = matches.subcommand_matches("cachegrind") {
         profiler = "cachegrind";
         p = Profiler::new_cachegrind();
+        if matches.is_present("n") {
+            n = matches.value_of("n").unwrap();
+        } else {
+            n = "all";
+        }
+
     }
 
-    if let Some(_) = matches.subcommand_matches("perf") {
-        profiler = "perf";
-        p = Profiler::new_perf();
-    }
+
 
 
     let path = binary.split("/").collect::<Vec<_>>();

@@ -4,54 +4,32 @@
 
 extern crate regex;
 extern crate clap;
+extern crate itertools;
+extern crate ndarray;
 
 use std::process::Command;
-use std::collections::HashMap;
 use std::fmt;
+use itertools::Zip;
+use ndarray::{Axis, stack, OwnedArray, ArrayView, Ix};
 
-use std::io::Write;
-
-macro_rules! println_stderr(
-    ($($arg:tt)*) => { {
-        let r = writeln!(&mut ::std::io::stderr(), $($arg)*);
-        r.expect("failed printing to stderr");
-    } }
-);
+pub type Mat<A> = OwnedArray<A,(Ix,Ix)>;
 
 /// Profiler enum. We have three profilers: PerfStat, CacheGrind, and CallGrind.
 pub enum Profiler<'a> {
-    /// PerfStat holds the parsed objects of `perf stat -d`
-    PerfStat {
-        task_clock: Option<f64>,
-        context_switches: Option<f64>,
-        cpu_migrations: Option<f64>,
-        page_faults: Option<f64>,
-        cycles: Option<f64>,
-        instructions: Option<f64>,
-        branches: Option<f64>,
-        branch_misses: Option<f64>,
-        seconds: Option<f64>,
-        l1_dcache_loads: Option<f64>,
-        l1_dcache_load_misses: Option<f64>,
-        llc_loads: Option<f64>,
-        llc_load_misses: Option<f64>,
-    },
-
     /// CachGrind holds the parsed objects of `valgrind --tool=cachegrind -cachegrind-out-file=cachegrind.out`
     CacheGrind {
-        i_refs: Option<f64>,
-        i1_misses: Option<f64>,
-        lli_misses: Option<f64>,
-        i1_miss_rate: Option<f64>,
-        lli_miss_rate: Option<f64>,
-        d_refs: Option<f64>,
-        d1_misses: Option<f64>,
-        d1_miss_rate: Option<f64>,
-        lld_misses: Option<f64>,
-        lld_miss_rate: Option<f64>,
-        ll_refs: Option<f64>,
-        ll_misses: Option<f64>,
-        ll_miss_rate: Option<f64>,
+        ir: Option<f64>,
+        i1mr: Option<f64>,
+        ilmr: Option<f64>,
+        dr: Option<f64>,
+        d1mr: Option<f64>,
+        dlmr: Option<f64>,
+        dw: Option<f64>,
+        d1mw: Option<f64>,
+        dlmw: Option<f64>,
+
+        numbers : Option<Mat<f64>>,
+        functs: Option<Vec<&'a str>>,
     },
 
     /// Call holds the parsed objects of `valgrind --tool=callgrind --callgrind-out-file=callgrind.out && cg_annotate callgrind.out`
@@ -66,81 +44,69 @@ pub enum Profiler<'a> {
 impl<'a> fmt::Display for Profiler<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Profiler::PerfStat { task_clock,
-                                 context_switches,
-                                 cpu_migrations,
-                                 page_faults,
-                                 cycles,
-                                 instructions,
-                                 branches,
-                                 branch_misses,
-                                 l1_dcache_loads,
-                                 l1_dcache_load_misses,
-                                 llc_loads,
-                                 llc_load_misses,
-                                 seconds } => {
-                write!(f,
-                       "\n\x1b[32mTask Clock\x1b[0m...{:.1} \n\x1b[32mContext \
-                        Switches\x1b[0m...{:.1}\n\x1b[32mCPU Migrations\x1b[0m...{:.1} \
-                        \n\x1b[32mPage Faults\x1b[0m...{:.1}\n\x1b[32mCycles\x1b[0m...{:.1} \
-                        \n\x1b[32mInstructions\x1b[0m...{:.1}\n\x1b[32mBranches\x1b[0m...{:.1} \
-                        \n\x1b[32mBranch Misses\x1b[0m...{:.1}\n\x1b[32ml1-dcache \
-                        Loads\x1b[0m...{:.1} \n \x1b[32ml1-dcache Load \
-                        Misses\x1b[0m...{:.1}\n\x1b[32mllc Loads\x1b[0m...{:.1} \n\x1b[32mllc \
-                        Load Misses\x1b[0m...{:.1}\n\x1b[32mSeconds\x1b[0m...{:.3}\n",
-                       task_clock.unwrap_or(std::f64::NAN),
-                       context_switches.unwrap_or(std::f64::NAN),
-                       cpu_migrations.unwrap_or(std::f64::NAN),
-                       page_faults.unwrap_or(std::f64::NAN),
-                       cycles.unwrap_or(std::f64::NAN),
-                       instructions.unwrap_or(std::f64::NAN),
-                       branches.unwrap_or(std::f64::NAN),
-                       branch_misses.unwrap_or(std::f64::NAN),
-                       l1_dcache_loads.unwrap_or(std::f64::NAN),
-                       l1_dcache_load_misses.unwrap_or(std::f64::NAN),
-                       llc_loads.unwrap_or(std::f64::NAN),
-                       llc_load_misses.unwrap_or(std::f64::NAN),
-                       seconds.unwrap_or(std::f64::NAN))
-            }
 
-            Profiler::CacheGrind { i_refs,
-                                   i1_misses,
-                                   lli_misses,
-                                   i1_miss_rate,
-                                   lli_miss_rate,
-                                   d_refs,
-                                   d1_misses,
-                                   d1_miss_rate,
-                                   lld_misses,
-                                   lld_miss_rate,
-                                   ll_refs,
-                                   ll_misses,
-                                   ll_miss_rate } => {
+            Profiler::CacheGrind { ref ir,
+                                   ref i1mr,
+                                   ref ilmr,
+                                   ref dr,
+                                   ref d1mr,
+                                   ref dlmr,
+                                   ref dw,
+                                   ref d1mw,
+                                   ref dlmw,
+
+                                   ref numbers,
+                                   ref functs } => {
                 write!(f,
-                       "\n\x1b[32mTotal I-Cache References\x1b[0m...{:.1} \n\x1b[32mL1 I-Cache \
-                        Misses\x1b[0m...{:.1}\n\x1b[32mL1 I-Cache Miss Rate\x1b[0m...{:.1} \n\
-                        \x1b[32mL2 I-Cache Misses\x1b[0m...{:.1}\n\x1b[32mL2 I-Cache Miss \
-                        Rate\x1b[0m...{:.1} \n\x1b[32mTotal D-Cache \
-                        References\x1b[0m...{:.1}\n\x1b[32mL1 D-Cache Misses\x1b[0m...{:.1} \
-                        \n\x1b[32mL1 D-Cache Miss Rate\x1b[0m...{:.1}\n\x1b[32mL2 D-Cache \
-                        Misses\x1b[0m...{:.1} \n\x1b[32mL2 D-Cache Miss \
-                        Rate\x1b[0m...{:.1}\n\x1b[32mTotal L2-Cache References\x1b[0m...{:.1} \
-                        \n\x1b[32mL2 Cache Misses\x1b[0m...{:.1}\n\x1b[32mL2 Miss \
-                        Rate\x1b[0m...{:.3}\n",
-                       i_refs.unwrap_or(std::f64::NAN),
-                       i1_misses.unwrap_or(std::f64::NAN),
-                       i1_miss_rate.unwrap_or(std::f64::NAN),
-                       lli_misses.unwrap_or(std::f64::NAN),
-                       lli_miss_rate.unwrap_or(std::f64::NAN),
-                       d_refs.unwrap_or(std::f64::NAN),
-                       d1_misses.unwrap_or(std::f64::NAN),
-                       d1_miss_rate.unwrap_or(std::f64::NAN),
-                       lld_misses.unwrap_or(std::f64::NAN),
-                       lld_miss_rate.unwrap_or(std::f64::NAN),
-                       ll_refs.unwrap_or(std::f64::NAN),
-                       ll_misses.unwrap_or(std::f64::NAN),
-                       ll_miss_rate.unwrap_or(std::f64::NAN))
-            }
+                       "\n\x1b[32mTotal Instructions\x1b[0m...{}\t\x1b[0m\n\n\
+                       \x1b[32mTotal I1 Read Misses\x1b[0m...{}\t\x1b[0m\
+                       \x1b[32mTotal L1 Read Misses\x1b[0m...{}\n\x1b[0m\
+                       \x1b[32mTotal D1 Reads\x1b[0m...{}\t\x1b[0m\
+                       \x1b[32mTotal D1 Read Misses\x1b[0m...{}\n\x1b[0m\
+                       \x1b[32mTotal DL1 Read Misses\x1b[0m...{}\t\x1b[0m\
+                       \x1b[32mTotal Writes\x1b[0m...{}\n\x1b[0m\
+                       \x1b[32mTotal D1 Write Misses\x1b[0m...{}\t\x1b[0m\
+                       \x1b[32mTotal DL1 Write Misses\x1b[0m...{}\x1b[0m\n\n\n",
+                       ir.unwrap_or(std::f64::NAN),
+                       i1mr.unwrap_or(std::f64::NAN),
+                       ilmr.unwrap_or(std::f64::NAN),
+                       dr.unwrap_or(std::f64::NAN),
+                       d1mr.unwrap_or(std::f64::NAN),
+                       dlmr.unwrap_or(std::f64::NAN),
+                       dw.unwrap_or(std::f64::NAN),
+                       d1mw.unwrap_or(std::f64::NAN),
+                       dlmw.unwrap_or(std::f64::NAN),
+                   );
+                   write!(f, " \x1b[1;36mIr  \x1b[1;36mI1mr \x1b[1;36mILmr  \x1b[1;36mDr  \x1b[1;36mD1mr \x1b[1;36mDLmr  \x1b[1;36mDw  \x1b[1;36mD1mw \x1b[1;36mDLmw\n");
+                   if let &Some(ref func) = functs {
+                       if let &Some(ref ins) = numbers {
+                           for (ref x, &y) in ins.axis_iter(Axis(0)).zip(func.iter()) {
+
+                                   write!(f,
+                                          "\x1b[0m{:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {}\n",
+                                          x[0]/ir.unwrap() as f64, x[1]/i1mr.unwrap(),x[2]/ilmr.unwrap() as f64,x[3]/dr.unwrap() as f64,
+                                          x[4]/d1mr.unwrap() as f64,x[5]/dlmr.unwrap() as f64,x[6]/dw.unwrap() as f64,
+                                          x[7]/d1mw.unwrap() as f64,x[8]/dlmw.unwrap() as f64,
+                                          y);
+                                   println!("-----------------------------------------------------------------------");
+
+
+                                   }
+                               }
+                           }
+
+
+
+
+                   Ok(())
+
+               }
+
+
+
+
+
+
 
             Profiler::CallGrind { ref total_instructions, ref instructions, ref functs } => {
 
@@ -210,40 +176,21 @@ pub trait Parser {
 
 /// Initialize the Profilers
 impl<'a> Profiler<'a> {
-    /// Initialize PerfStat
-    pub fn new_perf() -> Profiler<'a> {
-        Profiler::PerfStat {
-            task_clock: None,
-            context_switches: None,
-            cpu_migrations: None,
-            page_faults: None,
-            cycles: None,
-            instructions: None,
-            branches: None,
-            branch_misses: None,
-            seconds: None,
-            l1_dcache_loads: None,
-            l1_dcache_load_misses: None,
-            llc_loads: None,
-            llc_load_misses: None,
-        }
-    }
     /// Initialize CacheGrind
     pub fn new_cachegrind() -> Profiler<'a> {
         Profiler::CacheGrind {
-            i_refs: None,
-            i1_misses: None,
-            lli_misses: None,
-            i1_miss_rate: None,
-            lli_miss_rate: None,
-            d_refs: None,
-            d1_misses: None,
-            d1_miss_rate: None,
-            lld_misses: None,
-            lld_miss_rate: None,
-            ll_refs: None,
-            ll_misses: None,
-            ll_miss_rate: None,
+            ir: None,
+            i1mr: None,
+            ilmr: None,
+            dr: None,
+            d1mr: None,
+            dlmr: None,
+            dw: None,
+            d1mw: None,
+            dlmw: None,
+
+            numbers : None,
+            functs: None,
         }
     }
     /// Initialize CallGrind
@@ -262,25 +209,19 @@ impl<'a> Parser for Profiler<'a> {
     fn cli(&self, binary: &str) -> String {
         match *self {
 
-            Profiler::PerfStat { .. } => {
-                let perf_stat_output = Command::new("perf")
-                                           .arg("stat")
-                                           .arg(binary)
-                                           .output()
-                                           .unwrap_or_else(|e| panic!("failed {}", e));
-
-                String::from_utf8(perf_stat_output.stderr).expect("cli error")
-
-            }
-
             Profiler::CacheGrind { .. } => {
-                let cachegrind_output = Command::new("valgrind")
-                                            .arg("--tool=cachegrind")
-                                            .arg("--cachegrind-out-file=cachegrind.out")
+                Command::new("valgrind")
+                    .arg("--tool=cachegrind")
+                    .arg("--cachegrind-out-file=cachegrind.out")
+                    .arg(binary)
+                    .output()
+                    .unwrap_or_else(|e| panic!("failed {}", e));
+                let cachegrind_output = Command::new("cg_annotate")
+                                            .arg("cachegrind.out")
                                             .arg(binary)
                                             .output()
                                             .unwrap_or_else(|e| panic!("failed {}", e));
-                String::from_utf8(cachegrind_output.stderr).expect("cli error")
+                String::from_utf8(cachegrind_output.stdout).expect("cli error")
             }
 
             Profiler::CallGrind { .. } => {
@@ -304,146 +245,74 @@ impl<'a> Parser for Profiler<'a> {
     /// Get parse the profiler output into respective structs.
     fn parse<'b>(&'b self, output: &'b str, n: &str) -> Profiler {
         match *self {
-            Profiler::PerfStat { .. } => {
+
+            Profiler::CacheGrind { .. } => {
+
                 let out: Vec<&'b str> = output.split("\n").collect();
-                let mut z = out[3..].to_owned();
-                z.retain(|&x| {
-                    !x.contains("<not supported>") & !x.contains("panicked") &
-                    !x.contains("failed to read") & !x.contains("Performance")
-                });
-                let re = regex!(r"(\d+,\d{3},\d{3})|(\d+,\d{3})|\d+(\.\d+)?");
-                let re1 = regex!(r" [a-zA-Z]+-?[a-zA-Z]+?-?[a-zA-Z]+");
+                let z = out[22..].to_owned();
+
+
+
+                // let re = regex!(r"(\d+,\d{3},\d{3})|(\d+,\d{3})|[^\w\d{1}]&\d+(\.\d+)?|\d*\.\d+");
+                // let re1 = regex!(r"[a-zA-Z\d{1}?]+\s*\t*[a-zA-Z\d{1}?]+\s*\t*[a-zA-Z]+:");
 
                 let mut words: Vec<&str> = Vec::new();
-                let mut numbers: Vec<f64> = Vec::new();
+                let mut numbers : Vec<Mat<f64>> = Vec :: new();
 
                 for text in z.iter() {
-                    if let Some(s) = re.find(text) {
-                        let start = s.0 as usize;
-                        let end = s.1 as usize;
-                        unsafe {
-                            let s = text.slice_unchecked(start, end);
-                            numbers.push(s.trim()
-                                          .replace(",", "")
-                                          .parse::<f64>()
-                                          .ok()
-                                          .expect("f64 error"))
+                    let text = text.trim();
+                    let mut elems = text.split(" ")
+                                    .collect::<Vec<_>>();
+
+                    elems.retain(|x| x.len() > 0);
+                    if elems.len() > 7   {
+
+                        let ns = elems[0..elems.len()-1].iter().map(|x| x.trim().replace(",","").parse::<f64>().unwrap()).collect::<Vec<f64>>();
+                        if let Ok(e) = OwnedArray::from_shape_vec((ns.len(),1),ns){
+                            numbers.push(e);
                         }
+
+
+
+                        let path = elems[elems.len()-1].split(" ").collect::<Vec<_>>();
+                        let sp = path[0].split("/").collect::<Vec<_>>();
+                        words.push(sp[sp.len() - 1]);
+                    }
                     }
 
-                }
-
-                for text in z.iter() {
-                    if let Some(s) = re1.find(text) {
-                        let start = s.0 as usize;
-                        let end = s.1 as usize;
-                        unsafe {
-                            let word = text.slice_unchecked(start, end).trim();
-                            words.push(word)
-                        }
-                    }
-
-                }
-
-                let mut h = HashMap::new();
-                for (&x, &y) in words.iter().zip(numbers.iter()) {
-                    h.insert(x, y);
-                }
-
-                Profiler::PerfStat {
-                    task_clock: h.get("task-clock").cloned(),
-                    context_switches: h.get("context-switches").cloned(),
-                    cpu_migrations: h.get("cpu-migrations").cloned(),
-                    page_faults: h.get("page-faults").cloned(),
-                    cycles: h.get("cycles").cloned(),
-                    instructions: h.get("instructions").cloned(),
-                    branches: h.get("branches").cloned(),
-                    branch_misses: h.get("branch-misses").cloned(),
-                    seconds: h.get("seconds").cloned(),
-                    l1_dcache_loads: h.get("l1_dcache_loads").cloned(),
-                    l1_dcache_load_misses: h.get("l1_dcache_load_misses").cloned(),
-                    llc_loads: h.get("llc_loads").cloned(),
-                    llc_load_misses: h.get("llc_load_misses").cloned(),
-                }
-
-            }
-            Profiler::CacheGrind { .. } => {
-                let mut out: Vec<&'b str> = output.split("\n").collect();
-                out.retain(|&x| x.contains("=="));
-                let z = out[6..].to_owned();
-                let r = regex!(r"==\d+==");
-                let mut zr: Vec<String> = Vec::new();
-                for text in z.iter() {
-                    zr.push(r.replace_all(text, ""));
-
-                }
-                let re = regex!(r"(\d+,\d{3},\d{3})|(\d+,\d{3})|[^\w\d{1}]&\d+(\.\d+)?|\d*\.\d+");
-                let re1 = regex!(r"[a-zA-Z\d{1}?]+\s*\t*[a-zA-Z\d{1}?]+\s*\t*[a-zA-Z]+:");
-
-                let mut words: Vec<String> = Vec::new();
-                let mut numbers: Vec<f64> = Vec::new();
-
-                for text in zr.iter() {
-                    if let Some(s) = re.find(text) {
-                        let start = s.0 as usize;
-                        let end = s.1 as usize;
-                        unsafe {
-                            let s = text.slice_unchecked(start, end);
-                            numbers.push(s.trim()
-                                          .replace(",", "")
-                                          .parse::<f64>()
-                                          .ok()
-                                          .expect("f64 error"))
-                        }
-                    }
-
-                }
+            let mat = stack(Axis(1), &numbers.iter().map(|x| x.view()).collect::<Vec<_>>().as_slice()).ok().unwrap();
+            let ir = mat.column(0).scalar_sum();
+            let i1mr = mat.column(1).scalar_sum();
+            let ilmr = mat.column(2).scalar_sum();
+            let dr = mat.column(3).scalar_sum();
+            let d1mr = mat.column(4).scalar_sum();
+            let dlmr = mat.column(5).scalar_sum();
+            let dw = mat.column(6).scalar_sum();
+            let d1mw = mat.column(7).scalar_sum();
+            let dlmw = mat.column(8).scalar_sum();
 
 
-                for text in zr.iter() {
-                    if let Some(s) = re1.find(text) {
-                        let start = s.0 as usize;
-                        let end = s.1 as usize;
-                        unsafe {
 
-                            let d = text.slice_unchecked(start, end)
-                                        .trim()
-                                        .to_lowercase()
-                                        .replace(":", "")
-                                        .split(" ")
-                                        .collect::<Vec<_>>()
-                                        .join("");
-
-                            words.push(d);
-                        }
-                    }
-
-                }
-
-                let mut h = HashMap::new();
-                for (x, &y) in words.iter().zip(numbers.iter()) {
-                    h.insert(x.as_ref(), y);
-                }
-
-
-                Profiler::CacheGrind {
-                    i_refs: h.get("irefs").cloned(),
-                    i1_misses: h.get("i1misses").cloned(),
-                    i1_miss_rate: h.get("i1missrate").cloned(),
-                    lli_misses: h.get("llimisses").cloned(),
-                    lli_miss_rate: h.get("llimissrate").cloned(),
-                    d_refs: h.get("drefs").cloned(),
-                    d1_misses: h.get("d1misses").cloned(),
-                    d1_miss_rate: h.get("d1missrate").cloned(),
-                    lld_misses: h.get("lldmisses").cloned(),
-                    lld_miss_rate: h.get("lldmissrate").cloned(),
-                    ll_refs: h.get("llrefs").cloned(),
-                    ll_misses: h.get("llmisses").cloned(),
-                    ll_miss_rate: h.get("llmissrate").cloned(),
-                }
-
+            if let Ok(s) = n.parse::<usize>() {
+                words = words.iter().take(s).map(|x| x.to_owned()).collect();
             }
 
+            Profiler::CacheGrind {
+            ir: Some(ir),
+            i1mr: Some(i1mr),
+            ilmr: Some(ilmr),
+            dr: Some(dr),
+            d1mr: Some(d1mr),
+            dlmr: Some(dlmr),
+            dw: Some(dw),
+            d1mw: Some(d1mw),
+            dlmw: Some(dlmw),
+            numbers : Some(mat),
+            functs: Some(words),
+            }
+
+
+        }
             Profiler::CallGrind { .. } => {
                 let out = output.split("\n").collect::<Vec<_>>();
                 let z = out[25..out.len()].to_owned();
