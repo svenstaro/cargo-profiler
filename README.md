@@ -5,15 +5,15 @@ cargo subcommand to profile binaries
 
 ```
 $ cargo build
-$ ./target/debug/profiler --bin=$BINARY $PROFILER
+$ ./target/debug/profiler --bin=$BINARY $PROFILER callgrind -n 10
+$ ./target/debug/profiler --bin=$BINARY $PROFILER cachegrind -n 10
+
 ```
 Currently support perf and cachegrind overall statistics, as well as callgrind function records.
 
 If using callgrind function records, you can limit output with
 
-```
-$ ./target/debug/profiler --bin=$BINARY $PROFILER callgrind -n 10
-```
+
 
 ## TODO
 
