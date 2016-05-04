@@ -49,7 +49,15 @@ fn main() {
                                                                         .short("n")
                                                                         .value_name("NUMBER")
                                                                         .takes_value(true)
-                                                                        .help("number of functions you want")))
+                                                                        .help("number of functions you want"))
+                                                                        .arg(Arg::with_name("sort")
+                                                                                 .long("sort")
+                                                                                 .value_name("SORT")
+                                                                                 .takes_value(true)
+                                                                                 .help("metric you want to sort by"))
+
+                                                                    )
+
                       .get_matches();
 
     // read binary argument, make sure it exists in the filesystem
@@ -60,6 +68,7 @@ fn main() {
 
     let mut p = Profiler::new_cachegrind();
     let mut n = "";
+    let mut s = "";
     let mut profiler = "";
     if let Some(matches) = matches.subcommand_matches("callgrind") {
         profiler = "callgrind";
@@ -70,6 +79,7 @@ fn main() {
         } else {
             n = "all";
         }
+
     }
 
     if let Some(matches) = matches.subcommand_matches("cachegrind") {
@@ -79,6 +89,11 @@ fn main() {
             n = matches.value_of("n").unwrap();
         } else {
             n = "all";
+        }
+        if matches.is_present("sort") {
+            s = matches.value_of("sort").unwrap();
+        }else {
+            s = "all";
         }
 
     }
@@ -95,7 +110,7 @@ fn main() {
     let output = p.cli(binary);
 
     // parse the output into struct
-    let parsed = p.parse(&output, n);
+    let parsed = p.parse(&output, n,s);
 
     // pretty-print
     println!("{}", parsed);

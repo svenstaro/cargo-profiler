@@ -171,7 +171,7 @@ impl<'a> fmt::Display for Profiler<'a> {
 /// the command line, and then parse the output into respective structs.
 pub trait Parser {
     fn cli(&self, binary: &str) -> String;
-    fn parse<'b>(&'b self, output: &'b str, n: &str) -> Profiler;
+    fn parse<'b>(&'b self, output: &'b str, n: &str, s : &str) -> Profiler;
 }
 
 /// Initialize the Profilers
@@ -243,7 +243,7 @@ impl<'a> Parser for Profiler<'a> {
     }
 
     /// Get parse the profiler output into respective structs.
-    fn parse<'b>(&'b self, output: &'b str, n: &str) -> Profiler {
+    fn parse<'b>(&'b self, output: &'b str, n: &str, s : &str) -> Profiler {
         match *self {
 
             Profiler::CacheGrind { .. } => {
@@ -268,6 +268,9 @@ impl<'a> Parser for Profiler<'a> {
                     if elems.len() > 7   {
 
                         let ns = elems[0..elems.len()-1].iter().map(|x| x.trim().replace(",","").parse::<f64>().unwrap()).collect::<Vec<f64>>();
+
+
+
                         if let Ok(e) = OwnedArray::from_shape_vec((ns.len(),1),ns){
                             numbers.push(e);
                         }
@@ -281,6 +284,54 @@ impl<'a> Parser for Profiler<'a> {
                     }
 
             let mat = stack(Axis(1), &numbers.iter().map(|x| x.view()).collect::<Vec<_>>().as_slice()).ok().unwrap();
+            let col = match s {
+                "ir" => {
+                     mat.column(0)
+                }
+                "i1mr" => {
+                    mat.column(1)
+                }
+                "ilmr" => {
+                    mat.column(2)
+                }
+                "dr" => {
+                    mat.column(3)
+                }
+                "d1mr" => {
+                     mat.column(4)
+                }
+                "dlmr" => {
+                    mat.column(5)
+                }
+                "dw" => {
+                    mat.column(6)
+                }
+                "d1mw" => {
+                    mat.column(7)
+                }
+                "dlmw" => {
+                    mat.column(8)
+                }
+                "all" => {
+                    mat.column(0)
+                }
+                _ => {
+                    panic!("sort argument is not valid")
+                }
+            };
+            let (mut sorted_words, mut mat) = match s {
+                "all" => (words, mat.select(Axis(0), &(0..mat.shape()[0]).collect::<Vec<_>>().as_slice())),
+                _ =>  {
+
+                let r = (0..mat.shape()[0]).collect::<Vec<_>>();
+                let mut z = r.iter().zip(col.iter()).collect::<Vec<(&usize,&f64)>>();
+                z.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+                let ind = z.iter().map(|x| *x.0).collect::<Vec<_>>();
+
+                (ind.iter().map(|x| *words.get(*x).unwrap()).collect::<Vec<_>>(), mat.select(Axis(0), ind.as_slice()))
+
+            }
+        };
             let ir = mat.column(0).scalar_sum();
             let i1mr = mat.column(1).scalar_sum();
             let ilmr = mat.column(2).scalar_sum();
@@ -294,8 +345,12 @@ impl<'a> Parser for Profiler<'a> {
 
 
             if let Ok(s) = n.parse::<usize>() {
-                words = words.iter().take(s).map(|x| x.to_owned()).collect();
+                let mut ls = (0..s).collect::<Vec<_>>();
+
+                mat = mat.select(Axis(0), ls.as_slice());
+                sorted_words = sorted_words.iter().take(s).map(|x| x.to_owned()).collect::<Vec<_>>();
             }
+
 
             Profiler::CacheGrind {
             ir: Some(ir),
@@ -307,8 +362,8 @@ impl<'a> Parser for Profiler<'a> {
             dw: Some(dw),
             d1mw: Some(d1mw),
             dlmw: Some(dlmw),
-            numbers : Some(mat),
-            functs: Some(words),
+            numbers : Some(mat.to_owned()),
+            functs: Some(sorted_words),
             }
 
 
