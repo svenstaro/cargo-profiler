@@ -15,4 +15,3 @@ $ ./target/debug/profiler --bin=$BINARY $PROFILER cachegrind -n 10
 ## TODO
 
 * cmp subcommand - compare binary profiles
-* sort output based on metric 
