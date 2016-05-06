@@ -4,19 +4,11 @@
 extern crate clap;
 extern crate regex;
 extern crate profiler;
-#[macro_use]
-extern crate colorify;
 use clap::{Arg, App, SubCommand};
 use profiler::{Profiler, Parser};
 use std::path::Path;
 use std::process::Command;
 
-macro_rules! println_stderr(
-    ($($arg:tt)*) => { {
-        let r = writeln!(&mut ::std::io::stderr(), $($arg)*);
-        r.expect("failed printing to stderr");
-    } }
-);
 
 
 #[cfg(all(unix, target_os = "linux"))]
@@ -41,23 +33,20 @@ fn main() {
                                                .value_name("NUMBER")
                                                .takes_value(true)
                                                .help("number of functions you want")))
-                                               .subcommand(SubCommand::with_name("cachegrind")
-                                                               .about("gets cachegrind features")
-                                                               .version("1.0")
-                                                               .author("Suchin Gururangan")
-                                                               .arg(Arg::with_name("n")
-                                                                        .short("n")
-                                                                        .value_name("NUMBER")
-                                                                        .takes_value(true)
-                                                                        .help("number of functions you want"))
-                                                                        .arg(Arg::with_name("sort")
-                                                                                 .long("sort")
-                                                                                 .value_name("SORT")
-                                                                                 .takes_value(true)
-                                                                                 .help("metric you want to sort by"))
-
-                                                                    )
-
+                      .subcommand(SubCommand::with_name("cachegrind")
+                                      .about("gets cachegrind features")
+                                      .version("1.0")
+                                      .author("Suchin Gururangan")
+                                      .arg(Arg::with_name("n")
+                                               .short("n")
+                                               .value_name("NUMBER")
+                                               .takes_value(true)
+                                               .help("number of functions you want"))
+                                      .arg(Arg::with_name("sort")
+                                               .long("sort")
+                                               .value_name("SORT")
+                                               .takes_value(true)
+                                               .help("metric you want to sort by")))
                       .get_matches();
 
     // read binary argument, make sure it exists in the filesystem
@@ -66,51 +55,48 @@ fn main() {
     assert!(Path::new(binary).exists(),
             "That binary doesn't exist. Enter a valid path.");
 
+    // initialize variables to default ones
     let mut p = Profiler::new_cachegrind();
-    let mut n = "";
-    let mut s = "";
-    let mut profiler = "";
+    let mut n = "all";
+    let mut s = "none";
+    let mut profiler = "none";
+
+    // re-assign variables if subcommand is callgrind
     if let Some(matches) = matches.subcommand_matches("callgrind") {
         profiler = "callgrind";
         p = Profiler::new_callgrind();
-
         if matches.is_present("n") {
             n = matches.value_of("n").unwrap();
-        } else {
-            n = "all";
         }
 
     }
 
+    // re-assign variables if subcommand is cachegrind
     if let Some(matches) = matches.subcommand_matches("cachegrind") {
         profiler = "cachegrind";
         p = Profiler::new_cachegrind();
         if matches.is_present("n") {
             n = matches.value_of("n").unwrap();
-        } else {
-            n = "all";
         }
         if matches.is_present("sort") {
             s = matches.value_of("sort").unwrap();
-        }else {
-            s = "all";
         }
-
     }
 
 
 
-
+    // get the name of the binary from the binary argument
     let path = binary.split("/").collect::<Vec<_>>();
     let name = path[path.len() - 1];
     println!("\nProfiling \x1b[1;36m{} \x1b[0mwith \x1b[1;36m{}...",
              name,
              profiler);
+
     // get the profiler output
     let output = p.cli(binary);
 
     // parse the output into struct
-    let parsed = p.parse(&output, n,s);
+    let parsed = p.parse(&output, n, s);
 
     // pretty-print
     println!("{}", parsed);
