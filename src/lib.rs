@@ -142,7 +142,6 @@ impl<'a> Parser for Profiler<'a> {
 
                 out_split.retain(|x| re.is_match(x));
 
-                println!("{:?}", out_split[out_split.len()-1]);
 
                 let mut funcs: Vec<&str> = Vec::new();
                 let mut data: Vec<Mat<f64>> = Vec::new();
@@ -175,7 +174,6 @@ impl<'a> Parser for Profiler<'a> {
                               .ok()
                               .unwrap();
                 let mat = mat.t();
-            //   println!("{:?}", sorted_funcs.len());
 
                 let sort_col = match s {
                     "ir" => mat.column(0),
@@ -208,7 +206,6 @@ impl<'a> Parser for Profiler<'a> {
                 match  s {
                     "none" => {}
                     _ => {
-                        println!("yes");
                     let mut reverse_indices = (0..mat.rows()).collect::<Vec<usize>>();
                     reverse_indices.reverse();
                     mat = mat.select(Axis(0), reverse_indices.as_slice());
@@ -260,10 +257,8 @@ impl<'a> Parser for Profiler<'a> {
 
             Profiler::CallGrind { .. } => {
                 let mut out_split = output.split("\n").collect::<Vec<_>>();
-                println!("{:?}", out_split);
                 let re = regex!(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*");
                 out_split.retain(|x| re.is_match(x));
-                println!("{:?}", out_split);
 
 
                 let mut funcs: Vec<&'b str> = Vec::new();

@@ -19,15 +19,15 @@ fn main() {
                       .version("1.0")
                       .author("Suchin Gururangan")
                       .about("Profile your binaries")
-                      .arg(Arg::with_name("binary")
-                               .long("bin")
-                               .value_name("BINARY")
-                               .required(false)
-                               .help("binary you want to profile"))
                       .subcommand(SubCommand::with_name("callgrind")
                                       .about("gets callgrind features")
                                       .version("1.0")
                                       .author("Suchin Gururangan")
+                                      .arg(Arg::with_name("binary")
+                                               .long("bin")
+                                               .value_name("BINARY")
+                                               .required(true)
+                                               .help("binary you want to profile"))
                                       .arg(Arg::with_name("n")
                                                .short("n")
                                                .value_name("NUMBER")
@@ -37,6 +37,11 @@ fn main() {
                                       .about("gets cachegrind features")
                                       .version("1.0")
                                       .author("Suchin Gururangan")
+                                      .arg(Arg::with_name("binary")
+                                               .long("bin")
+                                               .value_name("BINARY")
+                                               .required(true)
+                                               .help("binary you want to profile"))
                                       .arg(Arg::with_name("n")
                                                .short("n")
                                                .value_name("NUMBER")
@@ -49,22 +54,25 @@ fn main() {
                                                .help("metric you want to sort by")))
                       .get_matches();
 
-    // read binary argument, make sure it exists in the filesystem
-    let binary = matches.value_of("binary").unwrap();
-
-    assert!(Path::new(binary).exists(),
-            "That binary doesn't exist. Enter a valid path.");
 
     // initialize variables to default ones
     let mut p = Profiler::new_cachegrind();
     let mut n = "all";
     let mut s = "none";
     let mut profiler = "none";
+    let mut binary = "";
 
     // re-assign variables if subcommand is callgrind
     if let Some(matches) = matches.subcommand_matches("callgrind") {
         profiler = "callgrind";
         p = Profiler::new_callgrind();
+        // read binary argument, make sure it exists in the filesystem
+        binary = matches.value_of("binary").unwrap();
+
+        assert!(Path::new(binary).exists(),
+                "That binary doesn't exist. Enter a valid path.");
+
+
         if matches.is_present("n") {
             n = matches.value_of("n").unwrap();
         }
@@ -75,6 +83,11 @@ fn main() {
     if let Some(matches) = matches.subcommand_matches("cachegrind") {
         profiler = "cachegrind";
         p = Profiler::new_cachegrind();
+        binary = matches.value_of("binary").unwrap();
+
+        assert!(Path::new(binary).exists(),
+                "That binary doesn't exist. Enter a valid path.");
+
         if matches.is_present("n") {
             n = matches.value_of("n").unwrap();
         }
