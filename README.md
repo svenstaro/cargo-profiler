@@ -76,7 +76,7 @@ Profiling rsmat with cachegrind...
 
 Total Instructions...187979029	
 
-Total I1 Read Misses...240	   Total L1 Read Misses...222
+Total I1 Read Misses...240	    Total L1 Read Misses...222
 Total D1 Reads...61037082	    Total D1 Read Misses...48051
 Total DL1 Read Misses...2	    Total Writes...55133206
 Total D1 Write Misses...10408	Total DL1 Write Misses...8449
