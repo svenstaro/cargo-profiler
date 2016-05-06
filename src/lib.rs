@@ -9,10 +9,18 @@ extern crate ndarray;
 
 use std::process::Command;
 use std::fmt;
-use ndarray::{Axis, stack, OwnedArray, Ix};
+use ndarray::{Axis, stack, OwnedArray, ArrayView, Ix};
 
 // initialize matrix object
 pub type Mat<A> = OwnedArray<A, (Ix, Ix)>;
+
+// utility function for sorting a matrix. used to sort cachegrind data by particular metric.
+pub fn sort_matrix(mat : Mat<f64>, sort_col: ArrayView<f64,Ix>) -> (Mat<f64>, Vec<usize>){
+    let mut enum_col = sort_col.iter().enumerate().collect::<Vec<(usize, &f64)>>();
+    enum_col.sort_by(|a, &b| a.1.partial_cmp(b.1).unwrap());
+    let indices = enum_col.iter().map(|x| x.0).collect::<Vec<usize>>();
+    (mat.select(Axis(0), indices.as_slice()), indices)
+}
 
 // Profiler enum. We have two profilers: CacheGrind and CallGrind.
 pub enum Profiler<'a> {
@@ -90,7 +98,7 @@ impl<'a> Profiler<'a> {
 // the command line, and then parse the output into respective structs.
 pub trait Parser {
     fn cli(&self, binary: &str) -> String;
-    fn parse<'b>(&'b self, output: &'b str, n: &str, s: &str) -> Profiler;
+    fn parse<'b>(&'b self, output: &'b str,n: &str, s: &str) -> Profiler;
 }
 
 
@@ -213,14 +221,8 @@ impl<'a> Parser for Profiler<'a> {
                 let (mut sorted_funcs, mut mat) = match s {
                     "none" => (funcs, mat.to_owned()),
                     _ => {
-                        let mut enum_col = sort_col.iter()
-                                                   .enumerate()
-                                                   .collect::<Vec<(usize, &f64)>>();
-                        enum_col.sort_by(|a, &b| a.1.partial_cmp(b.1).unwrap());
-                        let indices = enum_col.iter().map(|x| x.0).collect::<Vec<_>>();
-
-                        (indices.iter().map(|&x| funcs[x]).collect::<Vec<&'b str>>(),
-                         mat.select(Axis(0), indices.as_slice()))
+                        let (mat, indices) = sort_matrix(mat.to_owned(),sort_col);
+                        (indices.iter().map(|&x| funcs[x]).collect::<Vec<&'b str>>(), mat)
 
                     }
                 };
