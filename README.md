@@ -35,7 +35,7 @@ $ cargo-profiler callgrind --bin=$PATH_TO_BINARY
 $ cargo-profiler cachegrind --bin=$PATH_TO_BINARY
 ```
 
-You can limit the number of functions you'd like to look at with the argument `-n`:
+You can limit the number of functions you'd like to look at:
 
 ```
 $ cargo-profiler callgrind --bin=$PATH_TO_BINARY -n 10
