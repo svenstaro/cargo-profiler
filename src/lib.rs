@@ -14,10 +14,11 @@ use ndarray::{Axis, stack, OwnedArray, Ix};
 // initialize matrix object
 pub type Mat<A> = OwnedArray<A, (Ix, Ix)>;
 
-/// Profiler enum. We have two profilers: CacheGrind and CallGrind.
+// Profiler enum. We have two profilers: CacheGrind and CallGrind.
 pub enum Profiler<'a> {
-    /// CachGrind holds the parsed objects of
-    /// `valgrind --tool=cachegrind -cachegrind-out-file=cachegrind.out && cg_annotate cachegrind.out`
+    // CachGrind holds the parsed objects of
+    // `valgrind --tool=cachegrind -cachegrind-out-file=cachegrind.out && cg_annotate
+    // cachegrind.out`
     CacheGrind {
         ir: Option<f64>,
         i1mr: Option<f64>,
@@ -32,8 +33,9 @@ pub enum Profiler<'a> {
         functs: Option<Vec<&'a str>>,
     },
 
-    /// Call holds the parsed objects of
-    /// `valgrind --tool=callgrind --callgrind-out-file=callgrind.out && callgrind_annotate callgrind.out`
+    // Call holds the parsed objects of
+    // `valgrind --tool=callgrind --callgrind-out-file=callgrind.out && callgrind_annotate
+    // callgrind.out`
     CallGrind {
         total_instructions: Option<f64>,
         instructions: Option<Vec<f64>>,
@@ -42,9 +44,9 @@ pub enum Profiler<'a> {
 }
 
 
-/// Initialize the Profilers
+// Initialize the Profilers
 impl<'a> Profiler<'a> {
-    /// Initialize CacheGrind
+    // Initialize CacheGrind
     pub fn new_cachegrind() -> Profiler<'a> {
         Profiler::CacheGrind {
             // total instruction references
@@ -71,7 +73,7 @@ impl<'a> Profiler<'a> {
             functs: None,
         }
     }
-    /// Initialize CallGrind
+    // Initialize CallGrind
     pub fn new_callgrind() -> Profiler<'a> {
         Profiler::CallGrind {
             // total instruction calls
@@ -84,8 +86,8 @@ impl<'a> Profiler<'a> {
     }
 }
 
-/// Parser trait. To parse the output of Profilers, we first have to get their output from
-/// the command line, and then parse the output into respective structs.
+// Parser trait. To parse the output of Profilers, we first have to get their output from
+// the command line, and then parse the output into respective structs.
 pub trait Parser {
     fn cli(&self, binary: &str) -> String;
     fn parse<'b>(&'b self, output: &'b str, n: &str, s: &str) -> Profiler;
@@ -94,10 +96,11 @@ pub trait Parser {
 
 
 impl<'a> Parser for Profiler<'a> {
-    /// Get profiler output from stdout.
+    // Get profiler output from stdout.
     fn cli(&self, binary: &str) -> String {
         match *self {
 
+            // get cachegrind cli output from stdout
             Profiler::CacheGrind { .. } => {
                 Command::new("valgrind")
                     .arg("--tool=cachegrind")
@@ -113,6 +116,7 @@ impl<'a> Parser for Profiler<'a> {
                 String::from_utf8(cachegrind_output.stdout).expect("cli error")
             }
 
+            // get callgrind cli output from stdout
             Profiler::CallGrind { .. } => {
                 Command::new("valgrind")
                     .arg("--tool=callgrind")
@@ -131,50 +135,63 @@ impl<'a> Parser for Profiler<'a> {
 
     }
 
-    /// Get parse the profiler output into respective structs.
+    // Get parse the profiler output into respective structs.
     fn parse<'b>(&'b self, output: &'b str, n: &str, s: &str) -> Profiler {
         match *self {
 
             Profiler::CacheGrind { .. } => {
-                let mut out_split : Vec<&'b str> = output.split("\n").collect();
-                // let out = out_split[22..].to_owned();
-                let re = regex!(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*");
+                // split output line-by-line
+                let mut out_split: Vec<&'b str> = output.split("\n").collect();
 
+                // regex identifies lines that start with digits and have characters that commonly
+                // show up in file paths
+                let re = regex!(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*");
                 out_split.retain(|x| re.is_match(x));
 
 
                 let mut funcs: Vec<&str> = Vec::new();
                 let mut data: Vec<Mat<f64>> = Vec::new();
-
+                // loop through each line and get numbers + func
                 for sample in out_split.iter() {
 
-                    let mut elems = sample.trim().split(" ")
-                                        .collect::<Vec<_>>();
+                    // trim the sample, split by whitespace to separate out each data point
+                    // (numbers + func)
+                    let mut data_elems = sample.trim()
+                                               .split(" ")
+                                               .collect::<Vec<_>>();
 
-                    elems.retain(|x| x.to_string() != "");
+                    // remove any empty strings
+                    data_elems.retain(|x| x.to_string() != "");
 
-                    let dataz = elems[0..elems.len()-1]
-                                 .iter()
-                                 .map(|x| x.trim().replace(",", "").parse::<f64>().unwrap())
-                                 .collect::<Vec<f64>>();
+                    // for each number, remove any commas and parse into f64. the last element in
+                    // data_elems is the function file path.
+                    let numbers = data_elems[0..data_elems.len() - 1]
+                                      .iter()
+                                      .map(|x| x.trim().replace(",", "").parse::<f64>().unwrap())
+                                      .collect::<Vec<f64>>();
 
-
-                    if let Ok(dat) = OwnedArray::from_shape_vec((dataz.len(), 1), dataz) {
-                        data.push(dat);
-
+                    // reshape the vector of parsed numbers into a 1 x 9 matrix, and push the
+                    // matrix to our vector of 1 x 9 matrices.
+                    if let Ok(data_col) = OwnedArray::from_shape_vec((numbers.len(), 1), numbers) {
+                        data.push(data_col);
                     }
+                    // the last element in data_elems is the function file path.
+                    // get the file in the file-path (which includes the function) and push that to
+                    // the funcs vector.
+                    let sp = data_elems[data_elems.len() - 1].split("/").collect::<Vec<_>>();
+                    funcs.push(sp[sp.len() - 1]);
+                }
 
-                        // let path = elems[elems.len() - 1].split(" ").collect::<Vec<_>>();
-                        let sp = elems[elems.len() - 1].split("/").collect::<Vec<_>>();
-                        funcs.push(sp[sp.len() - 1]);
-                    }
-
+                // stack all the 1 x 9 matrices in data to a 9 x n  matrix.
                 let mat = stack(Axis(1),
                                 &data.iter().map(|x| x.view()).collect::<Vec<_>>().as_slice())
                               .ok()
                               .unwrap();
+                // transpose the matrix so we have a n x 9 matrix displayed.
                 let mat = mat.t();
 
+                // match the sort argument to a column of the matrix that we will sort on.
+                // default sorting -> first column (total instructions).
                 let sort_col = match s {
                     "ir" => mat.column(0),
                     "i1mr" => mat.column(1),
@@ -189,29 +206,38 @@ impl<'a> Parser for Profiler<'a> {
                     _ => panic!("sort argument is not valid"),
                 };
 
+                // sort the matrix of data and functions by a particular column.
+                // to sort matrix, we keep track of sorted indices, and select the matrix wrt
+                // these sorted indices. to sort functions, we index the funcs vector with the
+                // sorted indices.
                 let (mut sorted_funcs, mut mat) = match s {
-                    "none" => {(funcs, mat.to_owned())},
+                    "none" => (funcs, mat.to_owned()),
                     _ => {
-
-                        let mut enum_col = sort_col.iter().enumerate().collect::<Vec<(usize, &f64)>>();
+                        let mut enum_col = sort_col.iter()
+                                                   .enumerate()
+                                                   .collect::<Vec<(usize, &f64)>>();
                         enum_col.sort_by(|a, &b| a.1.partial_cmp(b.1).unwrap());
                         let indices = enum_col.iter().map(|x| x.0).collect::<Vec<_>>();
 
                         (indices.iter().map(|&x| funcs[x]).collect::<Vec<&'b str>>(),
-                         mat.select(Axis(0), indices.as_slice())
-                        )
+                         mat.select(Axis(0), indices.as_slice()))
 
                     }
                 };
-                match  s {
+
+                // also, when we sort, we want to make sure that we reverse the order of the
+                // matrix/funcs so that the most expensive functions show up at the top.
+                match s {
                     "none" => {}
                     _ => {
-                    let mut reverse_indices = (0..mat.rows()).collect::<Vec<usize>>();
-                    reverse_indices.reverse();
-                    mat = mat.select(Axis(0), reverse_indices.as_slice());
-                    &sorted_funcs.reverse();
+                        let mut reverse_indices = (0..mat.rows()).collect::<Vec<usize>>();
+                        reverse_indices.reverse();
+                        mat = mat.select(Axis(0), reverse_indices.as_slice());
+                        &sorted_funcs.reverse();
                     }
                 }
+
+                // sum the columns of the data matrix to get total metrics.
                 let ir = mat.column(0).scalar_sum();
                 let i1mr = mat.column(1).scalar_sum();
                 let ilmr = mat.column(2).scalar_sum();
@@ -223,9 +249,10 @@ impl<'a> Parser for Profiler<'a> {
                 let dlmw = mat.column(8).scalar_sum();
 
 
-
+                // parse the limit argument n, and take the first n values of data matrix/funcs
+                // vector accordingly.
                 if let Ok(s) = n.parse::<usize>() {
-                    if s < mat.rows(){
+                    if s < mat.rows() {
                         let ls = (0..s).collect::<Vec<_>>();
 
                         mat = mat.select(Axis(0), ls.as_slice());
@@ -238,6 +265,7 @@ impl<'a> Parser for Profiler<'a> {
 
                 }
 
+                // put all data in cachegrind struct!
                 Profiler::CacheGrind {
                     ir: Some(ir),
                     i1mr: Some(i1mr),
@@ -251,22 +279,30 @@ impl<'a> Parser for Profiler<'a> {
                     data: Some(mat),
                     functs: Some(sorted_funcs),
                 }
-
-
             }
 
             Profiler::CallGrind { .. } => {
+
+                // split output line-by-line
                 let mut out_split = output.split("\n").collect::<Vec<_>>();
+
+                // regex identifies lines that start with digits and have characters that commonly
+                // show up in file paths
                 let re = regex!(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*");
                 out_split.retain(|x| re.is_match(x));
 
 
                 let mut funcs: Vec<&'b str> = Vec::new();
-                let mut data : Vec<f64>= Vec::new();
-
+                let mut data: Vec<f64> = Vec::new();
+                // loop through each line and get numbers + func
                 for sample in out_split.iter() {
+
+                    // trim the sample, split by whitespace to separate out each data point
+                    // (numbers + func)
                     let elems = sample.trim().split("  ").collect::<Vec<_>>();
 
+                    // for each number, remove any commas and parse into f64. the last element in
+                    // data_elems is the function file path.
                     if let Ok(s) = elems[0]
                                        .trim()
                                        .replace(",", "")
@@ -274,15 +310,19 @@ impl<'a> Parser for Profiler<'a> {
                         data.push(s);
                     }
 
-                    if elems.len() > 1 {
-                        let path = elems[1].split(" ").collect::<Vec<_>>();
-                        let sp = path[0].split("/").collect::<Vec<_>>();
-                        funcs.push(sp[sp.len() - 1])
-                    }
+                    // the function has some trailing whitespace and trash. remove that, and
+                    // get the function, push to functs vector.
+                    let path = elems[1].split(" ").collect::<Vec<_>>();
+                    let sp = path[0].split("/").collect::<Vec<_>>();
+                    funcs.push(sp[sp.len() - 1])
 
                 }
 
+                // get the total instructions by summing the data vector.
                 let total_instructions = data.iter().fold(0.0, |a, b| a + b);
+
+                // parse the limit argument n, and take the first n values of data/funcs vectors
+                // accordingly.
                 if let Ok(s) = n.parse::<usize>() {
                     if s < data.len() {
                         data = data.iter().take(s).map(|x| x.to_owned()).collect();
@@ -291,6 +331,7 @@ impl<'a> Parser for Profiler<'a> {
 
                 }
 
+                // put all data in cachegrind struct!
                 Profiler::CallGrind {
                     total_instructions: Some(total_instructions),
                     instructions: Some(data),
@@ -303,7 +344,7 @@ impl<'a> Parser for Profiler<'a> {
 }
 
 
-/// Pretty-print the profiler outputs into user-friendly formats.
+// Pretty-print the profiler outputs into user-friendly formats.
 impl<'a> fmt::Display for Profiler<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {

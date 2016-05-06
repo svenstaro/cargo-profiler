@@ -11,7 +11,7 @@ colorify = "0.2"
 itertools = "*"
 ndarray = "*"
 [lib]
-name="cargo-profiler"
+name="profiler"
 lib="src/lib.rs"
 
 [[bin]]
