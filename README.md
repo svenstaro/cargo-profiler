@@ -6,7 +6,7 @@ cargo subcommand to profile binaries
 First install valgrind:
 
 ```
-$sudo apt-get install valgrind
+$ sudo apt-get install valgrind
 ```
 
 Then, build the binary.
