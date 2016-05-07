@@ -3,12 +3,16 @@
 
 extern crate clap;
 extern crate regex;
-extern crate profiler;
+
+pub mod profiler;
+pub mod parse;
+pub mod display;
+
 use clap::{Arg, App, SubCommand};
-use profiler::{Profiler, Parser, Metric};
+use profiler::{Profiler, Metric};
+use parse::{CacheGrindParser, CallGrindParser};
 use std::path::Path;
 use std::process::Command;
-
 
 
 #[cfg(all(unix, target_os = "linux"))]
@@ -55,58 +59,50 @@ fn main() {
                       .get_matches();
 
 
-    // initialize variables to default ones
-    let mut p = Profiler::new_cachegrind();
-    let mut n = "all";
-    let mut sort_metric = Metric :: NAN;
-    let mut profiler = "none";
-    let mut binary = "";
+    // let (matches, profiler, p) = (matches.subcommand_matches("cachegrind").unwrap(), "cachegrind",CacheGrind::new_cachegrind());
+    let (matches, profiler, p) = match matches.subcommand_matches("callgrind") {
 
-    // re-assign variables if subcommand is callgrind
-    if let Some(matches) = matches.subcommand_matches("callgrind") {
-        profiler = "callgrind";
-        p = Profiler::new_callgrind();
-        // read binary argument, make sure it exists in the filesystem
-        binary = matches.value_of("binary").unwrap();
-
-        assert!(Path::new(binary).exists(),
-                "That binary doesn't exist. Enter a valid path.");
-
-
-        if matches.is_present("n") {
-            n = matches.value_of("n").unwrap();
-        }
-
-    }
-
-    // re-assign variables if subcommand is cachegrind
-    if let Some(matches) = matches.subcommand_matches("cachegrind") {
-        profiler = "cachegrind";
-        p = Profiler::new_cachegrind();
-
-        binary = matches.value_of("binary").unwrap();
-
-        assert!(Path::new(binary).exists(),
-                "That binary doesn't exist. Enter a valid path.");
-
-        if matches.is_present("n") {
-            n = matches.value_of("n").unwrap();
-        }
-        if matches.is_present("sort") {
-            sort_metric = match matches.value_of("sort").unwrap(){
-                "ir" => Metric::Ir,
-                 "i1mr"=>  Metric::I1mr,
-                "ilmr"=> Metric::Ilmr  ,
-                "dr"=>  Metric::Dr ,
-                 "d1mr"=>  Metric::D1mr,
-                "dlmr" =>  Metric::Dlmr,
-                "dw"=>  Metric::Dw,
-                 "d1mw"=> Metric::D1mw,
-                 "dlmw"=> Metric::Dlmw,
-                 _ => panic!("sort metric not valid")
+        Some(matches) => (matches, "callgrind", Profiler::new_callgrind()),
+        None => {
+            match matches.subcommand_matches("cachegrind") {
+                Some(matches) => (matches, "cachegrind", Profiler::new_cachegrind()),
+                None => panic!("Invalid profiler"),
             }
         }
-    }
+    };
+
+
+
+
+    // read binary argument, make sure it exists in the filesystem
+    let binary = match matches.value_of("binary") {
+        Some(z) => z,
+        None => panic!("did not supply valid binary"),
+    };
+
+    assert!(Path::new(binary).exists(),
+            "That binary doesn't exist. Enter a valid path.");
+
+
+    let num = match matches.value_of("n").unwrap().parse::<usize>() {
+        Ok(z) => z,
+        Err(_) => panic!("did not supply valid number argument"),
+    };
+
+    let sort_metric = match matches.value_of("sort") {
+        Some("ir") => Metric::Ir,
+        Some("i1mr") => Metric::I1mr,
+        Some("ilmr") => Metric::Ilmr,
+        Some("dr") => Metric::Dr,
+        Some("d1mr") => Metric::D1mr,
+        Some("dlmr") => Metric::Dlmr,
+        Some("dw") => Metric::Dw,
+        Some("d1mw") => Metric::D1mw,
+        Some("dlmw") => Metric::Dlmw,
+        None => Metric::NAN,
+        _ => panic!("sort metric not valid"),
+    };
+
 
 
 
@@ -118,10 +114,15 @@ fn main() {
              profiler);
 
     // get the profiler output
-    let output = p.cli(binary);
-
+    let output = match p {
+        Profiler::CallGrind { .. } => p.callgrind_cli(binary),
+        Profiler::CacheGrind { .. } => p.cachegrind_cli(binary),
+    };
     // parse the output into struct
-    let parsed = p.parse(&output, n, sort_metric);
+    let parsed = match p {
+        Profiler::CallGrind { .. } => p.callgrind_parse(&output, num),
+        Profiler::CacheGrind { .. } => p.cachegrind_parse(&output, num, sort_metric),
+    };
 
     // pretty-print
     println!("{}", parsed);
@@ -130,10 +131,10 @@ fn main() {
     Command::new("rm")
         .arg("cachegrind.out")
         .output()
-        .unwrap_or_else(|e| panic!("failed {}", e));
+        .unwrap_or_else(|e| panic!("failed to remove {}", e));
 
     Command::new("rm")
         .arg("callgrind.out")
         .output()
-        .unwrap_or_else(|e| panic!("failed {}", e));
+        .unwrap_or_else(|e| panic!("failed to remove {}", e));
 }
