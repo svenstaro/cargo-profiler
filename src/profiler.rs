@@ -1,6 +1,4 @@
-extern crate ndarray;
-
-use self::ndarray::{OwnedArray, Ix};
+use ndarray::{OwnedArray, Ix};
 use std::f64;
 
 // initialize matrix object

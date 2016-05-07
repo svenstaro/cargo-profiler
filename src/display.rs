@@ -1,8 +1,6 @@
-extern crate ndarray;
-
 use std::fmt;
 use profiler::Profiler;
-use self::ndarray::Axis;
+use ndarray::Axis;
 // Pretty-print the profiler outputs into user-friendly formats.
 impl<'a> fmt::Display for Profiler<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
