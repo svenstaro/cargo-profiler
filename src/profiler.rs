@@ -6,8 +6,6 @@ use std::f64;
 // initialize matrix object
 pub type Mat<A> = OwnedArray<A, (Ix, Ix)>;
 
-
-
 pub enum Metric {
     Ir,
     I1mr,
@@ -75,7 +73,7 @@ impl<'a> Profiler<'a> {
             // total dL cache write misses
             dlmw: f64::NAN,
             // profiler data
-            data: OwnedArray::from_shape_vec((10, 9), vec![f64::NAN; 10 *9]).ok().unwrap(),
+            data: OwnedArray::zeros((2,2)),
             // profiled functions in binary
             functs: None,
         }

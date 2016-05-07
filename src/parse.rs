@@ -165,7 +165,7 @@ impl<'a> CacheGrindParser for Profiler<'a> {
             // data_elems is the function file path.
             let numbers = data_elems[0..data_elems.len() - 1]
                               .iter()
-                              .map(|x| x.trim().replace(",", "").parse::<f64>().ok().unwrap())
+                              .map(|x| x.trim().replace(",", "").parse::<f64>().unwrap_or(panic!("the cachegrind output has changed. regex invalid.")))
                               .collect::<Vec<f64>>();
 
             // reshape the vector of parsed numbers into a 1 x 9 matrix, and push the
