@@ -1,104 +1,33 @@
 extern crate ndarray;
-
 use std::process::Command;
 use self::ndarray::{Axis, stack, OwnedArray, ArrayView, Ix};
-use profiler::{Profiler, Metric};
-
+use profiler::Profiler;
+use std::f64;
+use std::cmp::Ordering::Less;
 // initialize matrix object
 pub type Mat<A> = OwnedArray<A, (Ix, Ix)>;
 
 
-// utility function for sorting a matrix. used to sort cachegrind data by particular metric.
+pub enum Metric {
+    Ir,
+    I1mr,
+    Ilmr,
+    Dr,
+    D1mr,
+    Dlmr,
+    Dw,
+    D1mw,
+    Dlmw,
+    NAN,
+}
+
+
+// utility function for sorting a matrix. used to sort cachegrind data by particular metric (descending)
 pub fn sort_matrix(mat: &Mat<f64>, sort_col: ArrayView<f64, Ix>) -> (Mat<f64>, Vec<usize>) {
     let mut enum_col = sort_col.iter().enumerate().collect::<Vec<(usize, &f64)>>();
-    enum_col.sort_by(|a, &b| a.1.partial_cmp(b.1).unwrap());
+    enum_col.sort_by(|a, &b| a.1.partial_cmp(b.1).unwrap_or(Less).reverse());
     let indices = enum_col.iter().map(|x| x.0).collect::<Vec<usize>>();
     (mat.select(Axis(0), indices.as_slice()), indices)
-}
-
-// Parser trait. To parse the output of Profilers, we first have to get their output from
-// the command line, and then parse the output into respective structs.
-pub trait CallGrindParser {
-    fn callgrind_cli(&self, binary: &str) -> String;
-    fn callgrind_parse<'b>(&'b self, output: &'b str, num: usize) -> Profiler;
-}
-
-
-impl<'a> CallGrindParser for Profiler<'a> {
-    // Get profiler output from stdout.
-    fn callgrind_cli(&self, binary: &str) -> String {
-
-
-        // get callgrind cli output from stdout
-        Command::new("valgrind")
-            .arg("--tool=callgrind")
-            .arg("--callgrind-out-file=callgrind.out")
-            .arg(binary)
-            .output()
-            .unwrap_or_else(|e| panic!("failed {}", e));
-        let cachegrind_output = Command::new("callgrind_annotate")
-                                    .arg("callgrind.out")
-                                    .arg(binary)
-                                    .output()
-                                    .unwrap_or_else(|e| panic!("failed {}", e));
-        String::from_utf8(cachegrind_output.stdout).expect("cli error")
-
-    }
-
-    fn callgrind_parse<'b>(&'b self, output: &'b str, num: usize) -> Profiler {
-
-        // split output line-by-line
-        let mut out_split = output.split("\n").collect::<Vec<_>>();
-
-        // regex identifies lines that start with digits and have characters that commonly
-        // show up in file paths
-        let re = regex!(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*");
-        out_split.retain(|x| re.is_match(x));
-
-
-        let mut funcs: Vec<&'b str> = Vec::new();
-        let mut data: Vec<f64> = Vec::new();
-        // loop through each line and get numbers + func
-        for sample in out_split.iter() {
-
-            // trim the sample, split by whitespace to separate out each data point
-            // (numbers + func)
-            let elems = sample.trim().split("  ").collect::<Vec<_>>();
-
-            // for each number, remove any commas and parse into f64. the last element in
-            // data_elems is the function file path.
-            if let Ok(s) = elems[0]
-                               .trim()
-                               .replace(",", "")
-                               .parse::<f64>() {
-                data.push(s);
-            }
-
-            // the function has some trailing whitespace and trash. remove that, and
-            // get the function, push to functs vector.
-            let path = elems[1].split(" ").collect::<Vec<_>>();
-            let sp = path[0].split("/").collect::<Vec<_>>();
-            funcs.push(sp[sp.len() - 1])
-
-        }
-
-        // get the total instructions by summing the data vector.
-        let total_instructions = data.iter().fold(0.0, |a, b| a + b);
-
-        // parse the limit argument n, and take the first n values of data/funcs vectors
-        // accordingly.
-
-        if num < data.len() {
-            data = data.iter().take(num).cloned().collect();
-            funcs = funcs.iter().take(num).cloned().collect();
-        }
-        // put all data in cachegrind struct!
-        Profiler::CallGrind {
-            total_instructions: total_instructions,
-            instructions: data,
-            functs: Some(funcs),
-        }
-    }
 }
 
 
@@ -165,7 +94,13 @@ impl<'a> CacheGrindParser for Profiler<'a> {
             // data_elems is the function file path.
             let numbers = data_elems[0..data_elems.len() - 1]
                               .iter()
-                              .map(|x| x.trim().replace(",", "").parse::<f64>().unwrap_or(panic!("the cachegrind output has changed. regex invalid.")))
+                             .map(|x|
+                             {
+                                  match x.trim().replace(",", "").parse::<f64>(){
+                                      Ok(rep) => rep,
+                                      Err(rep) => panic!("regex problem at cachegrind output, failed at number {}", rep)
+                                }
+                            })
                               .collect::<Vec<f64>>();
 
             // reshape the vector of parsed numbers into a 1 x 9 matrix, and push the
@@ -181,10 +116,13 @@ impl<'a> CacheGrindParser for Profiler<'a> {
         }
 
         // stack all the 1 x 9 matrices in data to a 9 x n  matrix.
-        let mat = stack(Axis(1),
+        let mat = match stack(Axis(1),
                         &data.iter().map(|x| x.view()).collect::<Vec<_>>().as_slice())
-                      .ok()
-                      .unwrap();
+                    {
+                        Ok(m) => m,
+                        Err(_) => panic!("data arrays are misaligned")
+                    };
+
         // transpose the matrix so we have a n x 9 matrix displayed.
         // let mat = mat.t();
 
@@ -210,14 +148,6 @@ impl<'a> CacheGrindParser for Profiler<'a> {
         let (mut sorted_mat, indices) = sort_matrix(&mat, sort_col);
         let mut sorted_funcs = indices.iter().map(|&x| funcs[x]).collect::<Vec<&'b str>>();
 
-
-        // also, when we sort, we want to make sure that we reverse the order of the
-        // matrix/funcs so that the most expensive functions show up at the top.
-
-        let mut reverse_indices = (0..sorted_mat.rows()).collect::<Vec<usize>>();
-        reverse_indices.reverse();
-        sorted_mat = sorted_mat.select(Axis(0), reverse_indices.as_slice());
-        &sorted_funcs.reverse();
 
         // sum the columns of the data matrix to get total metrics.
         let ir = sorted_mat.column(0).scalar_sum();

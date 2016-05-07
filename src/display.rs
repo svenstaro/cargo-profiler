@@ -1,6 +1,10 @@
+extern crate ndarray;
 use std::fmt;
 use profiler::Profiler;
-use ndarray::Axis;
+use self::ndarray::Axis;
+
+static DASHES: &'static str = "-----------------------------------------------------------------------";
+
 // Pretty-print the profiler outputs into user-friendly formats.
 impl<'a> fmt::Display for Profiler<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -55,7 +59,7 @@ impl<'a> fmt::Display for Profiler<'a> {
                                x[7] / d1mw,
                                x[8] / dlmw,
                                y);
-                        println!("-----------------------------------------------------------------------");
+                        println!("{}", DASHES);
 
 
                     }
@@ -78,11 +82,11 @@ impl<'a> fmt::Display for Profiler<'a> {
                             match perc {
                                 t if t >= 50.0 => {
                                     write!(f, "{} (\x1b[31m{:.1}%\x1b[0m)\x1b[0m {}\n", x, t, y);
-                                    println!("-----------------------------------------------------------------------");
+                                    println!("{}", DASHES);
                                 }
                                 t if (t >= 30.0) & (t < 50.0) => {
                                     write!(f, "{} (\x1b[33m{:.1}%\x1b[0m)\x1b[0m {}\n", x, t, y);
-                                    println!("-----------------------------------------------------------------------");
+                                    println!("{}", DASHES);
                                 }
                                 _ => {
                                     write!(f,
@@ -90,7 +94,7 @@ impl<'a> fmt::Display for Profiler<'a> {
                                            x,
                                            x / total_instructions * 100.,
                                            y);
-                                    println!("-----------------------------------------------------------------------");
+                                    println!("{}", DASHES);
                                 }
 
                             }
@@ -98,8 +102,6 @@ impl<'a> fmt::Display for Profiler<'a> {
 
                     }
                 }
-
-
                 Ok(())
 
             }

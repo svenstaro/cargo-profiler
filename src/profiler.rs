@@ -1,27 +1,15 @@
-use ndarray::{OwnedArray, Ix};
+extern crate ndarray;
+use self::ndarray::{OwnedArray, Ix};
 use std::f64;
 
 // initialize matrix object
 pub type Mat<A> = OwnedArray<A, (Ix, Ix)>;
 
-pub enum Metric {
-    Ir,
-    I1mr,
-    Ilmr,
-    Dr,
-    D1mr,
-    Dlmr,
-    Dw,
-    D1mw,
-    Dlmw,
-    NAN,
-}
-
 // Profiler enum. We have two profilers: CacheGrind and CallGrind.
 pub enum Profiler<'a> {
     // CachGrind holds the parsed objects of
-    // `valgrind --tool=cachegrind -cachegrind-out-file=cachegrind.out && cg_annotate
-    // cachegrind.out`
+    // `valgrind --tool=cachegrind -cachegrind-out-file=cachegrind.out
+    // && cg_annotate cachegrind.out`
     CacheGrind {
         ir: f64,
         i1mr: f64,
@@ -37,8 +25,8 @@ pub enum Profiler<'a> {
     },
 
     // Call holds the parsed objects of
-    // `valgrind --tool=callgrind --callgrind-out-file=callgrind.out && callgrind_annotate
-    // callgrind.out`
+    // `valgrind --tool=callgrind --callgrind-out-file=callgrind.out
+    // && callgrind_annotate callgrind.out`
     CallGrind {
         total_instructions: f64,
         instructions: Vec<f64>,
@@ -71,7 +59,7 @@ impl<'a> Profiler<'a> {
             // total dL cache write misses
             dlmw: f64::NAN,
             // profiler data
-            data: OwnedArray::zeros((2,2)),
+            data: OwnedArray::zeros((2, 2)),
             // profiled functions in binary
             functs: None,
         }

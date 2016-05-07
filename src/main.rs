@@ -9,15 +9,15 @@ pub mod parse;
 pub mod display;
 
 use clap::{Arg, App, SubCommand};
-use profiler::{Profiler, Metric};
-use parse::{CacheGrindParser, CallGrindParser};
+use profiler::Profiler;
+use parse::callgrind::CallGrindParser;
+use parse::cachegrind::{CacheGrindParser, Metric};
 use std::path::Path;
 use std::process::Command;
 
 
 #[cfg(all(unix, target_os = "linux"))]
 fn main() {
-
     // create profiler application
     let matches = App::new("cargo-profiler")
                       .version("1.0")
@@ -59,13 +59,12 @@ fn main() {
                       .get_matches();
 
 
-    // let (matches, profiler, p) = (matches.subcommand_matches("cachegrind").unwrap(), "cachegrind",CacheGrind::new_cachegrind());
-    let (matches, profiler, p) = match matches.subcommand_matches("callgrind") {
+    let (matches, profiler) = match matches.subcommand_matches("callgrind") {
 
-        Some(matches) => (matches, "callgrind", Profiler::new_callgrind()),
+        Some(matches) => (matches, Profiler::new_callgrind()),
         None => {
             match matches.subcommand_matches("cachegrind") {
-                Some(matches) => (matches, "cachegrind", Profiler::new_cachegrind()),
+                Some(matches) => (matches, Profiler::new_cachegrind()),
                 None => panic!("Invalid profiler"),
             }
         }
@@ -103,25 +102,31 @@ fn main() {
         _ => panic!("sort metric not valid"),
     };
 
-
-
-
     // get the name of the binary from the binary argument
     let path = binary.split("/").collect::<Vec<_>>();
     let name = path[path.len() - 1];
-    println!("\nProfiling \x1b[1;36m{} \x1b[0mwith \x1b[1;36m{}...",
-             name,
-             profiler);
+
+    match profiler {
+        Profiler::CallGrind { .. } => {
+            println!("\nProfiling \x1b[1;36m{} \x1b[0mwith \x1b[1;36mcallgrind...",
+                     name)
+        }
+        Profiler::CacheGrind { .. } => {
+            println!("\nProfiling \x1b[1;36m{} \x1b[0mwith \x1b[1;36mcachegrind...",
+                     name)
+        }
+    };
+
 
     // get the profiler output
-    let output = match p {
-        Profiler::CallGrind { .. } => p.callgrind_cli(binary),
-        Profiler::CacheGrind { .. } => p.cachegrind_cli(binary),
+    let output = match profiler {
+        Profiler::CallGrind { .. } => profiler.callgrind_cli(binary),
+        Profiler::CacheGrind { .. } => profiler.cachegrind_cli(binary),
     };
     // parse the output into struct
-    let parsed = match p {
-        Profiler::CallGrind { .. } => p.callgrind_parse(&output, num),
-        Profiler::CacheGrind { .. } => p.cachegrind_parse(&output, num, sort_metric),
+    let parsed = match profiler {
+        Profiler::CallGrind { .. } => profiler.callgrind_parse(&output, num),
+        Profiler::CacheGrind { .. } => profiler.cachegrind_parse(&output, num, sort_metric),
     };
 
     // pretty-print
