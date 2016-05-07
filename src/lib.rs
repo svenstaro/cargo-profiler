@@ -59,7 +59,7 @@ pub enum Profiler<'a> {
     // callgrind.out`
     CallGrind {
         total_instructions: f64,
-        instructions: Option<Vec<f64>>,
+        instructions: Vec<f64>,
         functs: Option<Vec<&'a str>>,
     },
 }
@@ -100,7 +100,7 @@ impl<'a> Profiler<'a> {
             // total instruction calls
             total_instructions: std::f64::NAN,
             // instruction data
-            instructions: None,
+            instructions: vec![0.],
             // profiled functions in binary
             functs: None,
         }
@@ -348,7 +348,7 @@ impl<'a> Parser for Profiler<'a> {
                 // put all data in cachegrind struct!
                 Profiler::CallGrind {
                     total_instructions:total_instructions,
-                    instructions: Some(data),
+                    instructions: data,
                     functs: Some(funcs),
                 }
             }
@@ -429,8 +429,7 @@ impl<'a> fmt::Display for Profiler<'a> {
                        total_instructions);
 
                 if let &Some(ref func) = functs {
-                    if let &Some(ref ins) = instructions {
-                        for (&x, &y) in ins.iter().zip(func.iter()) {
+                        for (&x, &y) in instructions.iter().zip(func.iter()) {
                             {
 
                                 let perc = x / total_instructions *
@@ -465,7 +464,7 @@ impl<'a> fmt::Display for Profiler<'a> {
 
                                 }
                             }
-                        }
+
                     }
                 }
 
