@@ -5,7 +5,7 @@ extern crate clap;
 extern crate regex;
 extern crate profiler;
 use clap::{Arg, App, SubCommand};
-use profiler::{Profiler, Parser};
+use profiler::{Profiler, Parser, Metric};
 use std::path::Path;
 use std::process::Command;
 
@@ -58,7 +58,7 @@ fn main() {
     // initialize variables to default ones
     let mut p = Profiler::new_cachegrind();
     let mut n = "all";
-    let mut s = "none";
+    let mut sort_metric = Metric :: NAN;
     let mut profiler = "none";
     let mut binary = "";
 
@@ -83,6 +83,7 @@ fn main() {
     if let Some(matches) = matches.subcommand_matches("cachegrind") {
         profiler = "cachegrind";
         p = Profiler::new_cachegrind();
+
         binary = matches.value_of("binary").unwrap();
 
         assert!(Path::new(binary).exists(),
@@ -92,7 +93,18 @@ fn main() {
             n = matches.value_of("n").unwrap();
         }
         if matches.is_present("sort") {
-            s = matches.value_of("sort").unwrap();
+            sort_metric = match matches.value_of("sort").unwrap(){
+                "ir" => Metric::Ir,
+                 "i1mr"=>  Metric::I1mr,
+                "ilmr"=> Metric::Ilmr  ,
+                "dr"=>  Metric::Dr ,
+                 "d1mr"=>  Metric::D1mr,
+                "dlmr" =>  Metric::Dlmr,
+                "dw"=>  Metric::Dw,
+                 "d1mw"=> Metric::D1mw,
+                 "dlmw"=> Metric::Dlmw,
+                 _ => panic!("sort metric not valid")
+            }
         }
     }
 
@@ -109,7 +121,7 @@ fn main() {
     let output = p.cli(binary);
 
     // parse the output into struct
-    let parsed = p.parse(&output, n, s);
+    let parsed = p.parse(&output, n, sort_metric);
 
     // pretty-print
     println!("{}", parsed);

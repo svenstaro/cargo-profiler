@@ -22,22 +22,35 @@ pub fn sort_matrix(mat : Mat<f64>, sort_col: ArrayView<f64,Ix>) -> (Mat<f64>, Ve
     (mat.select(Axis(0), indices.as_slice()), indices)
 }
 
+pub enum Metric {
+    Ir,
+    I1mr,
+    Ilmr,
+    Dr,
+    D1mr,
+    Dlmr,
+    Dw,
+    D1mw,
+    Dlmw,
+    NAN
+}
+
 // Profiler enum. We have two profilers: CacheGrind and CallGrind.
 pub enum Profiler<'a> {
     // CachGrind holds the parsed objects of
     // `valgrind --tool=cachegrind -cachegrind-out-file=cachegrind.out && cg_annotate
     // cachegrind.out`
     CacheGrind {
-        ir: Option<f64>,
-        i1mr: Option<f64>,
-        ilmr: Option<f64>,
-        dr: Option<f64>,
-        d1mr: Option<f64>,
-        dlmr: Option<f64>,
-        dw: Option<f64>,
-        d1mw: Option<f64>,
-        dlmw: Option<f64>,
-        data: Option<Mat<f64>>,
+        ir: f64,
+        i1mr: f64,
+        ilmr: f64,
+        dr: f64,
+        d1mr: f64,
+        dlmr: f64,
+        dw: f64,
+        d1mw: f64,
+        dlmw: f64,
+        data: Mat<f64>,
         functs: Option<Vec<&'a str>>,
     },
 
@@ -45,7 +58,7 @@ pub enum Profiler<'a> {
     // `valgrind --tool=callgrind --callgrind-out-file=callgrind.out && callgrind_annotate
     // callgrind.out`
     CallGrind {
-        total_instructions: Option<f64>,
+        total_instructions: f64,
         instructions: Option<Vec<f64>>,
         functs: Option<Vec<&'a str>>,
     },
@@ -58,25 +71,25 @@ impl<'a> Profiler<'a> {
     pub fn new_cachegrind() -> Profiler<'a> {
         Profiler::CacheGrind {
             // total instruction references
-            ir: None,
+            ir: std::f64::NAN,
             // total i1-cache read misses
-            i1mr: None,
+            i1mr: std::f64::NAN,
             // total iL-cache read misses
-            ilmr: None,
+            ilmr: std::f64::NAN,
             // total reads
-            dr: None,
+            dr: std::f64::NAN,
             // total d1-cache read misses
-            d1mr: None,
+            d1mr: std::f64::NAN,
             // total dL-cache read misses
-            dlmr: None,
+            dlmr: std::f64::NAN,
             // total d-cache writes
-            dw: None,
+            dw: std::f64::NAN,
             // total d1-cache write-misses
-            d1mw: None,
+            d1mw: std::f64::NAN,
             // total dL cache write misses
-            dlmw: None,
+            dlmw: std::f64::NAN,
             // profiler data
-            data: None,
+            data: OwnedArray::from_shape_vec((10, 9), vec![std::f64::NAN; 10 *9]).ok().unwrap(),
             // profiled functions in binary
             functs: None,
         }
@@ -85,7 +98,7 @@ impl<'a> Profiler<'a> {
     pub fn new_callgrind() -> Profiler<'a> {
         Profiler::CallGrind {
             // total instruction calls
-            total_instructions: None,
+            total_instructions: std::f64::NAN,
             // instruction data
             instructions: None,
             // profiled functions in binary
@@ -98,7 +111,7 @@ impl<'a> Profiler<'a> {
 // the command line, and then parse the output into respective structs.
 pub trait Parser {
     fn cli(&self, binary: &str) -> String;
-    fn parse<'b>(&'b self, output: &'b str,n: &str, s: &str) -> Profiler;
+    fn parse<'b>(&'b self, output: &'b str,n: &str, s: Metric) -> Profiler;
 }
 
 
@@ -144,7 +157,7 @@ impl<'a> Parser for Profiler<'a> {
     }
 
     // Get parse the profiler output into respective structs.
-    fn parse<'b>(&'b self, output: &'b str, n: &str, s: &str) -> Profiler {
+    fn parse<'b>(&'b self, output: &'b str, n: &str, sort_metric : Metric) -> Profiler {
         match *self {
 
             Profiler::CacheGrind { .. } => {
@@ -175,7 +188,7 @@ impl<'a> Parser for Profiler<'a> {
                     // data_elems is the function file path.
                     let numbers = data_elems[0..data_elems.len() - 1]
                                       .iter()
-                                      .map(|x| x.trim().replace(",", "").parse::<f64>().unwrap())
+                                      .map(|x| x.trim().replace(",", "").parse::<f64>().ok().unwrap())
                                       .collect::<Vec<f64>>();
 
                     // reshape the vector of parsed numbers into a 1 x 9 matrix, and push the
@@ -193,24 +206,23 @@ impl<'a> Parser for Profiler<'a> {
                 // stack all the 1 x 9 matrices in data to a 9 x n  matrix.
                 let mat = stack(Axis(1),
                                 &data.iter().map(|x| x.view()).collect::<Vec<_>>().as_slice())
-                              .ok()
-                              .unwrap();
+                              .ok().unwrap()
+                              ;
                 // transpose the matrix so we have a n x 9 matrix displayed.
                 let mat = mat.t();
 
                 // match the sort argument to a column of the matrix that we will sort on.
                 // default sorting -> first column (total instructions).
-                let sort_col = match s {
-                    "ir" => mat.column(0),
-                    "i1mr" => mat.column(1),
-                    "ilmr" => mat.column(2),
-                    "dr" => mat.column(3),
-                    "d1mr" => mat.column(4),
-                    "dlmr" => mat.column(5),
-                    "dw" => mat.column(6),
-                    "d1mw" => mat.column(7),
-                    "dlmw" => mat.column(8),
-                    "none" => mat.column(0),
+                let sort_col = match sort_metric {
+                    Metric::Ir => mat.column(0),
+                    Metric::I1mr => mat.column(1),
+                    Metric::Ilmr  => mat.column(2),
+                    Metric::Dr => mat.column(3),
+                    Metric::D1mr => mat.column(4),
+                    Metric::Dlmr => mat.column(5),
+                    Metric::Dw => mat.column(6),
+                    Metric::D1mw => mat.column(7),
+                    Metric::Dlmw => mat.column(8),
                     _ => panic!("sort argument is not valid"),
                 };
 
@@ -218,8 +230,8 @@ impl<'a> Parser for Profiler<'a> {
                 // to sort matrix, we keep track of sorted indices, and select the matrix wrt
                 // these sorted indices. to sort functions, we index the funcs vector with the
                 // sorted indices.
-                let (mut sorted_funcs, mut mat) = match s {
-                    "none" => (funcs, mat.to_owned()),
+                let (mut sorted_funcs, mut mat) = match sort_metric {
+                    Metric::NAN => (funcs, mat.to_owned()),
                     _ => {
                         let (mat, indices) = sort_matrix(mat.to_owned(),sort_col);
                         (indices.iter().map(|&x| funcs[x]).collect::<Vec<&'b str>>(), mat)
@@ -229,8 +241,8 @@ impl<'a> Parser for Profiler<'a> {
 
                 // also, when we sort, we want to make sure that we reverse the order of the
                 // matrix/funcs so that the most expensive functions show up at the top.
-                match s {
-                    "none" => {}
+                match sort_metric {
+                    Metric::NAN => {}
                     _ => {
                         let mut reverse_indices = (0..mat.rows()).collect::<Vec<usize>>();
                         reverse_indices.reverse();
@@ -269,16 +281,16 @@ impl<'a> Parser for Profiler<'a> {
 
                 // put all data in cachegrind struct!
                 Profiler::CacheGrind {
-                    ir: Some(ir),
-                    i1mr: Some(i1mr),
-                    ilmr: Some(ilmr),
-                    dr: Some(dr),
-                    d1mr: Some(d1mr),
-                    dlmr: Some(dlmr),
-                    dw: Some(dw),
-                    d1mw: Some(d1mw),
-                    dlmw: Some(dlmw),
-                    data: Some(mat),
+                    ir: ir,
+                    i1mr: i1mr,
+                    ilmr: ilmr,
+                    dr: dr,
+                    d1mr: d1mr,
+                    dlmr: dlmr,
+                    dw: dw,
+                    d1mw: d1mw,
+                    dlmw: dlmw,
+                    data: mat,
                     functs: Some(sorted_funcs),
                 }
             }
@@ -335,7 +347,7 @@ impl<'a> Parser for Profiler<'a> {
 
                 // put all data in cachegrind struct!
                 Profiler::CallGrind {
-                    total_instructions: Some(total_instructions),
+                    total_instructions:total_instructions,
                     instructions: Some(data),
                     functs: Some(funcs),
                 }
@@ -371,15 +383,15 @@ impl<'a> fmt::Display for Profiler<'a> {
                        \x1b[32mTotal Writes\x1b[0m...{}\n\x1b[0m\
                        \x1b[32mTotal D1 Write Misses\x1b[0m...{}\t\x1b[0m\
                        \x1b[32mTotal DL1 Write Misses\x1b[0m...{}\x1b[0m\n\n\n",
-                       ir.unwrap_or(std::f64::NAN),
-                       i1mr.unwrap_or(std::f64::NAN),
-                       ilmr.unwrap_or(std::f64::NAN),
-                       dr.unwrap_or(std::f64::NAN),
-                       d1mr.unwrap_or(std::f64::NAN),
-                       dlmr.unwrap_or(std::f64::NAN),
-                       dw.unwrap_or(std::f64::NAN),
-                       d1mw.unwrap_or(std::f64::NAN),
-                       dlmw.unwrap_or(std::f64::NAN),
+                       ir,
+                       i1mr,
+                       ilmr,
+                       dr,
+                       d1mr,
+                       dlmr,
+                       dw,
+                       d1mw,
+                       dlmw,
                    );
                 write!(f,
                        " \x1b[1;36mIr  \x1b[1;36mI1mr \x1b[1;36mILmr  \x1b[1;36mDr  \
@@ -387,27 +399,25 @@ impl<'a> fmt::Display for Profiler<'a> {
                         \x1b[1;36mDLmw\n");
 
                 if let &Some(ref func) = functs {
-                    if let &Some(ref dat) = data {
-
-                        for (ref x, &y) in dat.axis_iter(Axis(0)).zip(func.iter()) {
+                        for (ref x, &y) in data.axis_iter(Axis(0)).zip(func.iter()) {
                             write!(f,
                                    "\x1b[0m{:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} \
                                     {}\n",
-                                   x[0] / ir.unwrap() as f64,
-                                   x[1] / i1mr.unwrap(),
-                                   x[2] / ilmr.unwrap() as f64,
-                                   x[3] / dr.unwrap() as f64,
-                                   x[4] / d1mr.unwrap() as f64,
-                                   x[5] / dlmr.unwrap() as f64,
-                                   x[6] / dw.unwrap() as f64,
-                                   x[7] / d1mw.unwrap() as f64,
-                                   x[8] / dlmw.unwrap() as f64,
+                                   x[0] / ir,
+                                   x[1] / i1mr,
+                                   x[2] / ilmr,
+                                   x[3] / dr,
+                                   x[4] / d1mr,
+                                   x[5] / dlmr,
+                                   x[6] / dw,
+                                   x[7] / d1mw,
+                                   x[8] / dlmw,
                                    y);
                             println!("-----------------------------------------------------------------------");
 
 
                         }
-                    }
+
                 }
                 Ok(())
             }
@@ -416,14 +426,14 @@ impl<'a> fmt::Display for Profiler<'a> {
 
                 write!(f,
                        "\n\x1b[32mTotal Instructions\x1b[0m...{}\n\n\x1b[0m",
-                       total_instructions.unwrap_or(std::f64::NAN));
+                       total_instructions);
 
                 if let &Some(ref func) = functs {
                     if let &Some(ref ins) = instructions {
                         for (&x, &y) in ins.iter().zip(func.iter()) {
                             {
 
-                                let perc = x / total_instructions.unwrap_or(std::f64::NAN) as f64 *
+                                let perc = x / total_instructions *
                                            100.;
                                 match perc {
                                     t if t >= 50.0 => {
@@ -447,7 +457,7 @@ impl<'a> fmt::Display for Profiler<'a> {
                                                "{} (\x1b[32m{:.1}%\x1b[0m)\x1b[0m {}\n",
                                                x,
                                                x /
-                                               total_instructions.unwrap_or(std::f64::NAN) as f64 *
+                                               total_instructions *
                                                100.,
                                                y);
                                         println!("-----------------------------------------------------------------------");
