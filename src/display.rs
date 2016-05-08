@@ -45,25 +45,20 @@ impl<'a> fmt::Display for Profiler<'a> {
                         \x1b[1;36mD1mr \x1b[1;36mDLmr  \x1b[1;36mDw  \x1b[1;36mD1mw \
                         \x1b[1;36mDLmw\n");
 
-                if let &Some(ref func) = functs {
-                    for (ref x, &y) in data.axis_iter(Axis(0)).zip(func.iter()) {
-                        write!(f,
-                               "\x1b[0m{:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {}\n",
-                               x[0] / ir,
-                               x[1] / i1mr,
-                               x[2] / ilmr,
-                               x[3] / dr,
-                               x[4] / d1mr,
-                               x[5] / dlmr,
-                               x[6] / dw,
-                               x[7] / d1mw,
-                               x[8] / dlmw,
-                               y);
-                        println!("{}", DASHES);
-
-
-                    }
-
+                for (ref x, &y) in data.axis_iter(Axis(0)).zip(functs.iter()) {
+                    write!(f,
+                           "\x1b[0m{:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {}\n",
+                           x[0] / ir,
+                           x[1] / i1mr,
+                           x[2] / ilmr,
+                           x[3] / dr,
+                           x[4] / d1mr,
+                           x[5] / dlmr,
+                           x[6] / dw,
+                           x[7] / d1mw,
+                           x[8] / dlmw,
+                           y);
+                    println!("{}", DASHES);
                 }
                 Ok(())
             }
@@ -74,32 +69,28 @@ impl<'a> fmt::Display for Profiler<'a> {
                        "\n\x1b[32mTotal Instructions\x1b[0m...{}\n\n\x1b[0m",
                        total_instructions);
 
-                if let &Some(ref func) = functs {
-                    for (&x, &y) in instructions.iter().zip(func.iter()) {
-                        {
+                for (&x, &y) in instructions.iter().zip(functs.iter()) {
+                    {
 
-                            let perc = x / total_instructions * 100.;
-                            match perc {
-                                t if t >= 50.0 => {
-                                    write!(f, "{} (\x1b[31m{:.1}%\x1b[0m)\x1b[0m {}\n", x, t, y);
-                                    println!("{}", DASHES);
-                                }
-                                t if (t >= 30.0) & (t < 50.0) => {
-                                    write!(f, "{} (\x1b[33m{:.1}%\x1b[0m)\x1b[0m {}\n", x, t, y);
-                                    println!("{}", DASHES);
-                                }
-                                _ => {
-                                    write!(f,
-                                           "{} (\x1b[32m{:.1}%\x1b[0m)\x1b[0m {}\n",
-                                           x,
-                                           x / total_instructions * 100.,
-                                           y);
-                                    println!("{}", DASHES);
-                                }
-
+                        let perc = x / total_instructions * 100.;
+                        match perc {
+                            t if t >= 50.0 => {
+                                write!(f, "{} (\x1b[31m{:.1}%\x1b[0m)\x1b[0m {}\n", x, t, y);
+                                println!("{}", DASHES);
+                            }
+                            t if (t >= 30.0) & (t < 50.0) => {
+                                write!(f, "{} (\x1b[33m{:.1}%\x1b[0m)\x1b[0m {}\n", x, t, y);
+                                println!("{}", DASHES);
+                            }
+                            _ => {
+                                write!(f,
+                                       "{} (\x1b[32m{:.1}%\x1b[0m)\x1b[0m {}\n",
+                                       x,
+                                       x / total_instructions * 100.,
+                                       y);
+                                println!("{}", DASHES);
                             }
                         }
-
                     }
                 }
                 Ok(())

@@ -76,7 +76,7 @@ fn main() {
     // read binary argument, make sure it exists in the filesystem
     let binary = match matches.value_of("binary") {
         Some(z) => z,
-        None => panic!("did not supply valid binary"),
+        None => panic!("Invalid binary"),
     };
 
     assert!(Path::new(binary).exists(),
@@ -85,7 +85,7 @@ fn main() {
 
     let num = match matches.value_of("n").unwrap().parse::<usize>() {
         Ok(z) => z,
-        Err(_) => panic!("did not supply valid number argument"),
+        Err(_) => panic!("Invalid number argument"),
     };
 
     let sort_metric = match matches.value_of("sort") {
@@ -99,7 +99,7 @@ fn main() {
         Some("d1mw") => Metric::D1mw,
         Some("dlmw") => Metric::Dlmw,
         None => Metric::NAN,
-        _ => panic!("sort metric not valid"),
+        _ => panic!("Sort metric not valid"),
     };
 
     // get the name of the binary from the binary argument

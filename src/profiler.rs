@@ -21,7 +21,7 @@ pub enum Profiler<'a> {
         d1mw: f64,
         dlmw: f64,
         data: Mat<f64>,
-        functs: Option<Vec<&'a str>>,
+        functs: Vec<&'a str>,
     },
 
     // Call holds the parsed objects of
@@ -30,7 +30,7 @@ pub enum Profiler<'a> {
     CallGrind {
         total_instructions: f64,
         instructions: Vec<f64>,
-        functs: Option<Vec<&'a str>>,
+        functs: Vec<&'a str>,
     },
 }
 
@@ -61,7 +61,7 @@ impl<'a> Profiler<'a> {
             // profiler data
             data: OwnedArray::zeros((2, 2)),
             // profiled functions in binary
-            functs: None,
+            functs: vec![""],
         }
     }
     // Initialize CallGrind
@@ -72,7 +72,7 @@ impl<'a> Profiler<'a> {
             // instruction data
             instructions: vec![0.],
             // profiled functions in binary
-            functs: None,
+            functs: vec![""],
         }
     }
 }

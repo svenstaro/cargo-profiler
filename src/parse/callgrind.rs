@@ -15,20 +15,20 @@ impl<'a> CallGrindParser for Profiler<'a> {
     // Get profiler output from stdout.
     fn callgrind_cli(&self, binary: &str) -> String {
 
-
         // get callgrind cli output from stdout
         Command::new("valgrind")
             .arg("--tool=callgrind")
             .arg("--callgrind-out-file=callgrind.out")
             .arg(binary)
             .output()
-            .unwrap_or_else(|e| panic!("failed {}", e));
+            .unwrap_or_else(|e| panic!("valgrind call failed at {}", e));
+
         let cachegrind_output = Command::new("callgrind_annotate")
                                     .arg("callgrind.out")
                                     .arg(binary)
                                     .output()
-                                    .unwrap_or_else(|e| panic!("failed {}", e));
-        String::from_utf8(cachegrind_output.stdout).expect("cli error")
+                                    .unwrap_or_else(|e| panic!("callgrind annotate failed at {}", e));
+        String::from_utf8(cachegrind_output.stdout).expect("error while returning cachegrind stdout")
 
     }
 
@@ -44,7 +44,7 @@ impl<'a> CallGrindParser for Profiler<'a> {
 
 
         let mut funcs: Vec<&'b str> = Vec::new();
-        let mut data: Vec<f64> = Vec::new();
+        let mut data_vec: Vec<f64> = Vec::new();
         // loop through each line and get numbers + func
         for sample in out_split.iter() {
 
@@ -54,37 +54,38 @@ impl<'a> CallGrindParser for Profiler<'a> {
 
             // for each number, remove any commas and parse into f64. the last element in
             // data_elems is the function file path.
-            let number = match elems[0].trim().replace(",", "").parse::<f64>(){
+            let data_row = match elems[0].trim().replace(",", "").parse::<f64>(){
                 Ok(rep) => rep,
-                Err(rep) => panic!("regex problem at callgrind output, failed at number {}", rep)
+                Err(rep) => panic!("regex problem at callgrind output, failed at value {}. Please file a bug.", rep)
           };
 
-            data.push(number);
+            data_vec.push(data_row);
 
 
             // the function has some trailing whitespace and trash. remove that, and
             // get the function, push to functs vector.
             let path = elems[1].split(" ").collect::<Vec<_>>();
-            let sp = path[0].split("/").collect::<Vec<_>>();
-            funcs.push(sp[sp.len() - 1])
+            let cleaned_path = path[0].split("/").collect::<Vec<_>>();
+            let func = cleaned_path[cleaned_path.len() - 1];
+            funcs.push(func)
 
         }
 
         // get the total instructions by summing the data vector.
-        let total_instructions = data.iter().fold(0.0, |a, b| a + b);
+        let total_instructions = data_vec.iter().fold(0.0, |a, b| a + b);
 
         // parse the limit argument n, and take the first n values of data/funcs vectors
         // accordingly.
 
-        if num < data.len() {
-            data = data.iter().take(num).cloned().collect();
+        if num < data_vec.len() {
+            data_vec = data_vec.iter().take(num).cloned().collect();
             funcs = funcs.iter().take(num).cloned().collect();
         }
         // put all data in cachegrind struct!
         Profiler::CallGrind {
             total_instructions: total_instructions,
-            instructions: data,
-            functs: Some(funcs),
+            instructions: data_vec,
+            functs: funcs,
         }
     }
 }
