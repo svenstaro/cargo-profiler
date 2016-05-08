@@ -36,7 +36,11 @@ pub fn sort_matrix(mat: &Mat<f64>, sort_col: ArrayView<f64, Ix>) -> (Mat<f64>, V
 /// the command line, and then parse the output into respective structs.
 pub trait CacheGrindParser {
     fn cachegrind_cli(&self, binary: &str) -> String;
-    fn cachegrind_parse<'b>(&'b self, output: &'b str, num: usize, sort_metric: Metric) -> Profiler;
+    fn cachegrind_parse<'b>(&'b self,
+                            output: &'b str,
+                            num: usize,
+                            sort_metric: Metric)
+                            -> Profiler;
 }
 
 
@@ -85,8 +89,8 @@ impl<'a> CacheGrindParser for Profiler<'a> {
             // trim the sample, split by whitespace to separate out each data point
             // (numbers + func)
             let mut elems = sample.trim()
-                                       .split(" ")
-                                       .collect::<Vec<_>>();
+                                  .split(" ")
+                                  .collect::<Vec<_>>();
 
             // remove any empty strings
             elems.retain(|x| x.to_string() != "");
@@ -95,13 +99,16 @@ impl<'a> CacheGrindParser for Profiler<'a> {
             // data_elems is the function file path.
             let numbers = elems[0..elems.len() - 1]
                               .iter()
-                             .map(|x|
-                             {
-                                  match x.trim().replace(",", "").parse::<f64>(){
+                              .map(|x| {
+                                  match x.trim().replace(",", "").parse::<f64>() {
                                       Ok(n) => n,
-                                      Err(n) => panic!("regex problem at cachegrind output, failed at number {}. Please file a bug.", n)
-                                }
-                            })
+                                      Err(n) => {
+                                          panic!("regex problem at cachegrind output,failed at \
+                                                  number {}. Please file a bug.",
+                                                 n)
+                                      }
+                                  }
+                              })
                               .collect::<Vec<f64>>();
 
             // reshape the vector of parsed numbers into a 1 x 9 matrix, and push the
@@ -113,17 +120,19 @@ impl<'a> CacheGrindParser for Profiler<'a> {
             // get the file in the file-path (which includes the function) and push that to
             // the funcs vector.
             let path = elems[elems.len() - 1].split("/").collect::<Vec<_>>();
-            let func = path[path.len()-1];
+            let func = path[path.len() - 1];
             funcs.push(func);
         }
 
         // stack all the 1 x 9 matrices in data to a 9 x n  matrix.
         let data_matrix = match stack(Axis(1),
-                        &data_vec.iter().map(|x| x.view()).collect::<Vec<_>>().as_slice())
-            {
-                Ok(m) => m,
-                Err(_) => panic!("metric data arrays are misaligned.")
-            };
+                                      &data_vec.iter()
+                                               .map(|x| x.view())
+                                               .collect::<Vec<_>>()
+                                               .as_slice()) {
+            Ok(m) => m,
+            Err(_) => panic!("metric data arrays are misaligned."),
+        };
 
 
         // match the sort argument to a column of the matrix that we will sort on.
