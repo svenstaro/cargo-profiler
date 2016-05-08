@@ -38,25 +38,15 @@ Profiling rsmat with callgrind...
 
 Total Instructions...190,372,956
 
-78,346,775 (41.2%) dgemm_kernel.rs:matrixmultiply::gemm::masked_kernel::h037533f74146b5d9
+78,346,775 (41.2%) dgemm_kernel.rs:matrixmultiply::gemm::masked_kernel::..
 -----------------------------------------------------------------------
-23,528,320 (12.4%) iter.rs:_$LT$std..ops..Range$LT$A$GT$$u20$as$u20$std..iter..Iterator$GT$::next::h3637c345b34d1bb2
+23,528,320 (12.4%) iter.rs:_$LT$std..ops..Range..std..iter..Iterator$GT$::next::h3637c345b34d1bb2
 -----------------------------------------------------------------------
-16,824,925 (8.8%) loopmacros.rs:matrixmultiply::gemm::masked_kernel::h037533f74146b5d9
+16,824,925 (8.8%) loopmacros.rs:matrixmultiply::gemm::masked_kernel::..
 -----------------------------------------------------------------------
 10,236,864 (5.4%) mem.rs:core::mem::swap::h8d5cd2518659f0bb
 -----------------------------------------------------------------------
 7,712,846 (4.1%) memset.S:memset
------------------------------------------------------------------------
-6,979,680 (3.7%) ops.rs:_$LT$usize$u20$as$u20$ops..Add$GT$::add::hc57472a1060d1f70
------------------------------------------------------------------------
-6,973,791 (3.7%) ptr.rs:core::ptr::_$LT$impl$u20$$BP$const$u20$T$GT$::offset::h686ec191b59fbed7
------------------------------------------------------------------------
-6,049,056 (3.2%) ops.rs:_$LT$$RF$$u27$b$u20$usize$u20$as$u20$ops..Add$LT$$RF$$u27$a$u20$usize$GT$$GT$::add::h09358de14d3353c1
------------------------------------------------------------------------
-3,942,400 (2.1%) wrapping.rs:_$LT$XorShiftRng$u20$as$u20$Rng$GT$::next_u32::h24beecf939a84404
------------------------------------------------------------------------
-3,174,400 (1.7%) mod.rs:core::num::_$LT$impl$u20$u32$GT$::overflowing_shr::haa481f134e0f4bd8
 -----------------------------------------------------------------------
 
 ```
