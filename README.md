@@ -38,7 +38,7 @@ $ cargo-profiler cachegrind --bin $PATH_TO_BINARY
 You can limit the number of functions you'd like to look at:
 
 ```
-$ cargo-profiler callgrind --bin $PATH_TO_BINARY -n 10
+$ cargo-profiler callgrind --bin ./target/debug/rsmat -n 10
 
 Profiling rsmat with callgrind...
 
@@ -70,7 +70,7 @@ Total Instructions...188599791
 With cachegrind, you can also sort the data by a particular metric column:
 
 ```
-$ cargo-profiler cachegrind --bin $PATH_TO_BINARY -n 10 --sort dw
+$ cargo-profiler cachegrind --bin ./target/debug/rsmat -n 10 --sort dw
 
 Profiling rsmat with cachegrind...
 
