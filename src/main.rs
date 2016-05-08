@@ -8,7 +8,7 @@ pub mod profiler;
 pub mod parse;
 pub mod display;
 
-use clap::{Arg, App, SubCommand};
+use clap::{Arg, App, SubCommand, AppSettings};
 use profiler::Profiler;
 use parse::callgrind::CallGrindParser;
 use parse::cachegrind::{CacheGrindParser, Metric};
@@ -20,55 +20,72 @@ use std::process::Command;
 fn main() {
     // create profiler application
     let matches = App::new("cargo-profiler")
+                      .bin_name("cargo")
+                      .settings(&[AppSettings::SubcommandRequired])
                       .version("1.0")
                       .author("Suchin Gururangan")
                       .about("Profile your binaries")
-                      .subcommand(SubCommand::with_name("callgrind")
+                      .subcommand(SubCommand::with_name("profiler")
                                       .about("gets callgrind features")
                                       .version("1.0")
                                       .author("Suchin Gururangan")
-                                      .arg(Arg::with_name("binary")
-                                               .long("bin")
-                                               .value_name("BINARY")
-                                               .required(true)
-                                               .help("binary you want to profile"))
-                                      .arg(Arg::with_name("n")
-                                               .short("n")
-                                               .value_name("NUMBER")
-                                               .takes_value(true)
-                                               .help("number of functions you want")))
-                      .subcommand(SubCommand::with_name("cachegrind")
-                                      .about("gets cachegrind features")
-                                      .version("1.0")
-                                      .author("Suchin Gururangan")
-                                      .arg(Arg::with_name("binary")
-                                               .long("bin")
-                                               .value_name("BINARY")
-                                               .required(true)
-                                               .help("binary you want to profile"))
-                                      .arg(Arg::with_name("n")
-                                               .short("n")
-                                               .value_name("NUMBER")
-                                               .takes_value(true)
-                                               .help("number of functions you want"))
-                                      .arg(Arg::with_name("sort")
-                                               .long("sort")
-                                               .value_name("SORT")
-                                               .takes_value(true)
-                                               .help("metric you want to sort by")))
+                                      .subcommand(SubCommand::with_name("callgrind")
+                                                      .about("gets callgrind features")
+                                                      .version("1.0")
+                                                      .author("Suchin Gururangan")
+                                                      .arg(Arg::with_name("binary")
+                                                               .long("bin")
+                                                               .value_name("BINARY")
+                                                               .required(true)
+                                                               .help("binary you want to \
+                                                                      profile"))
+                                                      .arg(Arg::with_name("n")
+                                                               .short("n")
+                                                               .value_name("NUMBER")
+                                                               .takes_value(true)
+                                                               .help("number of functions you \
+                                                                      want")))
+                                      .subcommand(SubCommand::with_name("cachegrind")
+                                                      .about("gets cachegrind features")
+                                                      .version("1.0")
+                                                      .author("Suchin Gururangan")
+                                                      .arg(Arg::with_name("binary")
+                                                               .long("bin")
+                                                               .value_name("BINARY")
+                                                               .required(true)
+                                                               .help("binary you want to \
+                                                                      profile"))
+                                                      .arg(Arg::with_name("n")
+                                                               .short("n")
+                                                               .value_name("NUMBER")
+                                                               .takes_value(true)
+                                                               .help("number of functions you \
+                                                                      want"))
+                                                      .arg(Arg::with_name("sort")
+                                                               .long("sort")
+                                                               .value_name("SORT")
+                                                               .takes_value(true)
+                                                               .help("metric you want to sort \
+                                                                      by"))))
                       .get_matches();
 
 
-    let (matches, profiler) = match matches.subcommand_matches("callgrind") {
+    let (matches, profiler) = match matches.subcommand_matches("profiler") {
 
-        Some(matches) => (matches, Profiler::new_callgrind()),
-        None => {
-            match matches.subcommand_matches("cachegrind") {
-                Some(matches) => (matches, Profiler::new_cachegrind()),
-                None => panic!("Invalid profiler"),
+        Some(matches) => {
+            match matches.subcommand_matches("callgrind") {
+                Some(matches) => (matches, Profiler::new_callgrind()),
+                None => {
+                    match matches.subcommand_matches("cachegrind") {
+                        Some(matches) => (matches, Profiler::new_cachegrind()),
+                        None => panic!("Invalid profiler"),
+                    }
+                }
             }
         }
+        None => panic!("Invalid profiler"),
     };
+
 
 
 
@@ -82,11 +99,13 @@ fn main() {
     assert!(Path::new(binary).exists(),
             "That binary doesn't exist. Enter a valid path.");
 
-
-    let num = match matches.value_of("n").unwrap().parse::<usize>() {
-        Ok(z) => z,
-        Err(_) => panic!("Invalid number argument"),
+    let num = match matches.value_of("n").map(|x| x.parse::<usize>()) {
+        Some(Ok(z)) => z,
+        Some(Err(_)) => panic!("Invalid number argument"),
+        None => 100,
     };
+
+
 
     let sort_metric = match matches.value_of("sort") {
         Some("ir") => Metric::Ir,

@@ -27,8 +27,11 @@ impl<'a> CallGrindParser for Profiler<'a> {
                                     .arg("callgrind.out")
                                     .arg(binary)
                                     .output()
-                                    .unwrap_or_else(|e| panic!("callgrind annotate failed at {}", e));
-        String::from_utf8(cachegrind_output.stdout).expect("error while returning cachegrind stdout")
+                                    .unwrap_or_else(|e| {
+                                        panic!("callgrind annotate failed at {}", e)
+                                    });
+        String::from_utf8(cachegrind_output.stdout)
+            .expect("error while returning cachegrind stdout")
 
     }
 
@@ -54,10 +57,14 @@ impl<'a> CallGrindParser for Profiler<'a> {
 
             // for each number, remove any commas and parse into f64. the last element in
             // data_elems is the function file path.
-            let data_row = match elems[0].trim().replace(",", "").parse::<f64>(){
+            let data_row = match elems[0].trim().replace(",", "").parse::<f64>() {
                 Ok(rep) => rep,
-                Err(rep) => panic!("regex problem at callgrind output, failed at value {}. Please file a bug.", rep)
-          };
+                Err(rep) => {
+                    panic!("regex problem at callgrind output, failed at value {}. Please file a \
+                            bug.",
+                           rep)
+                }
+            };
 
             data_vec.push(data_row);
 
