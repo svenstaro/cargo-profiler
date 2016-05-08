@@ -3,8 +3,6 @@ name = "cargo-profiler"
 version = "0.1.0"
 dependencies = [
  "clap 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "colorify 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "itertools 0.4.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "ndarray 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 0.1.68 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex_macros 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -40,11 +38,6 @@ dependencies = [
  "unicode-width 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "vec_map 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
-
-[[package]]
-name = "colorify"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "itertools"

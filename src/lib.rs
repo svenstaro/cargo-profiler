@@ -3,7 +3,6 @@
 
 extern crate regex;
 extern crate clap;
-extern crate itertools;
 extern crate ndarray;
 
 pub mod profiler;

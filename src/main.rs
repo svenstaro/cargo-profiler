@@ -102,7 +102,7 @@ fn main() {
     let num = match matches.value_of("n").map(|x| x.parse::<usize>()) {
         Some(Ok(z)) => z,
         Some(Err(_)) => panic!("Invalid number argument"),
-        None => 100,
+        None => 10000, // some arbitrarily large number...
     };
 
 

@@ -1,9 +1,36 @@
 extern crate ndarray;
+
 use std::fmt;
 use profiler::Profiler;
 use self::ndarray::Axis;
 
 static DASHES: &'static str = "-----------------------------------------------------------------------";
+
+// Format a number with thousands separators
+fn fmt_thousands_sep(n: &f64, sep: char) -> String {
+    let mut n_usize = *n as usize;
+    use std::fmt::Write;
+    let mut output = String::new();
+    let mut trailing = false;
+    for &pow in &[9, 6, 3, 0] {
+        let base = 10_usize.pow(pow);
+        if pow == 0 || trailing || n_usize / base != 0 {
+            if !trailing {
+                output.write_fmt(format_args!("{}", n_usize / base)).unwrap();
+            } else {
+                output.write_fmt(format_args!("{:03}", n_usize / base)).unwrap();
+            }
+            if pow != 0 {
+                output.push(sep);
+            }
+            trailing = true;
+        }
+
+        n_usize %= base;
+    }
+
+    output
+}
 
 // Pretty-print the profiler outputs into user-friendly formats.
 impl<'a> fmt::Display for Profiler<'a> {
@@ -30,15 +57,15 @@ impl<'a> fmt::Display for Profiler<'a> {
                        \x1b[32mTotal Writes\x1b[0m...{}\n\x1b[0m\
                        \x1b[32mTotal D1 Write Misses\x1b[0m...{}\t\x1b[0m\
                        \x1b[32mTotal DL1 Write Misses\x1b[0m...{}\x1b[0m\n\n\n",
-                       ir,
-                       i1mr,
-                       ilmr,
-                       dr,
-                       d1mr,
-                       dlmr,
-                       dw,
-                       d1mw,
-                       dlmw,
+                       fmt_thousands_sep(ir, ','),
+                      fmt_thousands_sep(i1mr, ','),
+                       fmt_thousands_sep(ilmr, ','),
+                       fmt_thousands_sep(dr, ','),
+                       fmt_thousands_sep(d1mr, ','),
+                       fmt_thousands_sep(dlmr, ','),
+                       fmt_thousands_sep(dw, ','),
+                       fmt_thousands_sep(d1mw, ','),
+                       fmt_thousands_sep(dlmw, ','),
                    );
                 write!(f,
                        " \x1b[1;36mIr  \x1b[1;36mI1mr \x1b[1;36mILmr  \x1b[1;36mDr  \
@@ -67,7 +94,7 @@ impl<'a> fmt::Display for Profiler<'a> {
 
                 write!(f,
                        "\n\x1b[32mTotal Instructions\x1b[0m...{}\n\n\x1b[0m",
-                       total_instructions);
+                       fmt_thousands_sep(&total_instructions, ','));
 
                 for (&x, &y) in instructions.iter().zip(functs.iter()) {
                     {
@@ -75,17 +102,25 @@ impl<'a> fmt::Display for Profiler<'a> {
                         let perc = x / total_instructions * 100.;
                         match perc {
                             t if t >= 50.0 => {
-                                write!(f, "{} (\x1b[31m{:.1}%\x1b[0m)\x1b[0m {}\n", x, t, y);
+                                write!(f,
+                                       "{} (\x1b[31m{:.1}%\x1b[0m)\x1b[0m {}\n",
+                                       fmt_thousands_sep(&x, ','),
+                                       t,
+                                       y);
                                 println!("{}", DASHES);
                             }
                             t if (t >= 30.0) & (t < 50.0) => {
-                                write!(f, "{} (\x1b[33m{:.1}%\x1b[0m)\x1b[0m {}\n", x, t, y);
+                                write!(f,
+                                       "{} (\x1b[33m{:.1}%\x1b[0m)\x1b[0m {}\n",
+                                       fmt_thousands_sep(&x, ','),
+                                       t,
+                                       y);
                                 println!("{}", DASHES);
                             }
                             _ => {
                                 write!(f,
                                        "{} (\x1b[32m{:.1}%\x1b[0m)\x1b[0m {}\n",
-                                       x,
+                                       fmt_thousands_sep(&x, ','),
                                        x / total_instructions * 100.,
                                        y);
                                 println!("{}", DASHES);
