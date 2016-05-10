@@ -25,13 +25,10 @@ impl fmt::Display for ProfError {
             ProfError::CallGrindError(ref e) => write!(f, "Callgrind error {}", e),
             ProfError::RegexError => write!(f, "Regex error. File bug."),
             ProfError::InvalidProfiler => write!(f, "Invalid profiler"),
-            ProfError::InvalidBinary => {
-                println!("yes");
-                write!(f, "Invalid binary")
-            }
+            ProfError::InvalidBinary => write!(f, "Invalid binary"),
             ProfError::InvalidNum => write!(f, "Invalid number"),
             ProfError::InvalidSortMetric => write!(f, "Invalid sort metric"),
-            ProfError::IOError(ref err) => fmt::Display::fmt(err, f),
+            ProfError::IOError(ref err) => write!(f, "IO Error: {}", err),
 
         }
     }
