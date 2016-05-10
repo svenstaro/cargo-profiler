@@ -2,40 +2,37 @@ extern crate ndarray;
 use std::process::Command;
 use profiler::Profiler;
 use std::f64;
+use err::ProfError;
 
 // Parser trait. To parse the output of Profilers, we first have to get their output from
 // the command line, and then parse the output into respective structs.
 pub trait CallGrindParser {
-    fn callgrind_cli(&self, binary: &str) -> String;
-    fn callgrind_parse<'b>(&'b self, output: &'b str, num: usize) -> Profiler;
+    fn callgrind_cli(&self, binary: &str) -> Result<String, ProfError>;
+    fn callgrind_parse<'b>(&'b self, output: &'b str, num: usize) -> Result<Profiler, ProfError>;
 }
 
 
 impl<'a> CallGrindParser for Profiler<'a> {
     // Get profiler output from stdout.
-    fn callgrind_cli(&self, binary: &str) -> String {
+    fn callgrind_cli(&self, binary: &str) -> Result<String, ProfError> {
 
         // get callgrind cli output from stdout
-        Command::new("valgrind")
-            .arg("--tool=callgrind")
-            .arg("--callgrind-out-file=callgrind.out")
-            .arg(binary)
-            .output()
-            .unwrap_or_else(|e| panic!("valgrind call failed at {}", e));
+        try!(Command::new("valgrind")
+                 .arg("--tool=callgrind")
+                 .arg("--callgrind-out-file=callgrind.out")
+                 .arg(binary)
+                 .output());
 
-        let cachegrind_output = Command::new("callgrind_annotate")
-                                    .arg("callgrind.out")
-                                    .arg(binary)
-                                    .output()
-                                    .unwrap_or_else(|e| {
-                                        panic!("callgrind annotate failed at {}", e)
-                                    });
-        String::from_utf8(cachegrind_output.stdout)
-            .expect("error while returning cachegrind stdout")
+        let cachegrind_output = try!(Command::new("callgrind_annotate")
+                                         .arg("callgrind.out")
+                                         .arg(binary)
+                                         .output());
+        Ok(String::from_utf8(cachegrind_output.stdout)
+               .expect("error while returning cachegrind stdout"))
 
     }
 
-    fn callgrind_parse<'b>(&'b self, output: &'b str, num: usize) -> Profiler {
+    fn callgrind_parse<'b>(&'b self, output: &'b str, num: usize) -> Result<Profiler, ProfError> {
 
         // split output line-by-line
         let mut out_split = output.split("\n").collect::<Vec<_>>();
@@ -89,10 +86,10 @@ impl<'a> CallGrindParser for Profiler<'a> {
             funcs = funcs.iter().take(num).cloned().collect();
         }
         // put all data in cachegrind struct!
-        Profiler::CallGrind {
+        Ok(Profiler::CallGrind {
             total_instructions: total_instructions,
             instructions: data_vec,
             functs: funcs,
-        }
+        })
     }
 }

@@ -53,10 +53,10 @@ impl<'a> fmt::Display for Profiler<'a> {
                        \x1b[32mTotal L1 Read Misses\x1b[0m...{}\n\x1b[0m\
                        \x1b[32mTotal D1 Reads\x1b[0m...{}\t\x1b[0m\
                        \x1b[32mTotal D1 Read Misses\x1b[0m...{}\n\x1b[0m\
-                       \x1b[32mTotal DL1 Read Misses\x1b[0m...{}\t\x1b[0m\
+                       \x1b[32mTotal LL Read Misses\x1b[0m...{}\t\x1b[0m\
                        \x1b[32mTotal Writes\x1b[0m...{}\n\x1b[0m\
                        \x1b[32mTotal D1 Write Misses\x1b[0m...{}\t\x1b[0m\
-                       \x1b[32mTotal DL1 Write Misses\x1b[0m...{}\x1b[0m\n\n\n",
+                       \x1b[32mTotal LL Write Misses\x1b[0m...{}\x1b[0m\n\n\n",
                        fmt_thousands_sep(ir, ','),
                       fmt_thousands_sep(i1mr, ','),
                        fmt_thousands_sep(ilmr, ','),

@@ -4,7 +4,7 @@ use self::ndarray::{Axis, stack, OwnedArray, ArrayView, Ix};
 use profiler::Profiler;
 use std::f64;
 use std::cmp::Ordering::Less;
-
+use err::ProfError;
 /// initialize matrix object
 pub type Mat<A> = OwnedArray<A, (Ix, Ix)>;
 
@@ -35,12 +35,12 @@ pub fn sort_matrix(mat: &Mat<f64>, sort_col: ArrayView<f64, Ix>) -> (Mat<f64>, V
 /// Parser trait. To parse the output of Profilers, we first have to get their output from
 /// the command line, and then parse the output into respective structs.
 pub trait CacheGrindParser {
-    fn cachegrind_cli(&self, binary: &str) -> String;
+    fn cachegrind_cli(&self, binary: &str) -> Result<String, ProfError>;
     fn cachegrind_parse<'b>(&'b self,
                             output: &'b str,
                             num: usize,
                             sort_metric: Metric)
-                            -> Profiler;
+                            -> Result<Profiler, ProfError>;
 }
 
 
@@ -49,21 +49,21 @@ pub trait CacheGrindParser {
 
 impl<'a> CacheGrindParser for Profiler<'a> {
     /// Get profiler output from stdout.
-    fn cachegrind_cli(&self, binary: &str) -> String {
+    fn cachegrind_cli(&self, binary: &str) -> Result<String, ProfError> {
 
         // get cachegrind cli output from stdout
-        Command::new("valgrind")
-            .arg("--tool=cachegrind")
-            .arg("--cachegrind-out-file=cachegrind.out")
-            .arg(binary)
-            .output()
-            .unwrap_or_else(|e| panic!("failed {}", e));
-        let cachegrind_output = Command::new("cg_annotate")
-                                    .arg("cachegrind.out")
-                                    .arg(binary)
-                                    .output()
-                                    .unwrap_or_else(|e| panic!("failed {}", e));
-        String::from_utf8(cachegrind_output.stdout).expect("error while returning callgrind stdout")
+        try!(Command::new("valgrind")
+                 .arg("--tool=cachegrind")
+                 .arg("--cachegrind-out-file=cachegrind.out")
+                 .arg(binary)
+                 .output());
+        let cachegrind_output = try!(Command::new("cg_annotate")
+                                         .arg("cachegrind.out")
+                                         .arg(binary)
+                                         .output());
+
+        Ok(String::from_utf8(cachegrind_output.stdout)
+               .expect("error while returning callgrind stdout"))
 
     }
     // Get parse the profiler output into respective structs.
@@ -71,7 +71,7 @@ impl<'a> CacheGrindParser for Profiler<'a> {
                             output: &'b str,
                             num: usize,
                             sort_metric: Metric)
-                            -> Profiler {
+                            -> Result<Profiler, ProfError> {
         // split output line-by-line
         let mut out_split: Vec<&'b str> = output.split("\n").collect();
 
@@ -97,19 +97,28 @@ impl<'a> CacheGrindParser for Profiler<'a> {
 
             // for each number, remove any commas and parse into f64. the last element in
             // data_elems is the function file path.
-            let numbers = elems[0..elems.len() - 1]
-                              .iter()
-                              .map(|x| {
-                                  match x.trim().replace(",", "").parse::<f64>() {
-                                      Ok(n) => n,
-                                      Err(n) => {
-                                          panic!("regex problem at cachegrind output,failed at \
-                                                  number {}. Please file a bug.",
-                                                 n)
-                                      }
-                                  }
-                              })
-                              .collect::<Vec<f64>>();
+            let mut numbers = Vec::new();
+
+            for elem in elems[0..elems.len() - 1].iter() {
+                let number = match elem.trim().replace(",", "").parse::<f64>() {
+                    Ok(n) => n,
+                    Err(_) => return Err(ProfError::RegexError),
+                };
+                numbers.push(number);
+            }
+            // let numbers = elems[0..elems.len() - 1]
+            //                   .iter()
+            //                   .map(|x| {
+            //                       match x.trim().replace(",", "").parse::<f64>() {
+            //                           Ok(n) => n,
+            //                           Err(n) => {
+            //                               panic!("regex problem at cachegrind output,failed at \
+            //                                       number {}. Please file a bug.",
+            //                                      n)
+            //                           }
+            //                       }
+            //                   })
+            //                   .collect::<Vec<f64>>();
 
             // reshape the vector of parsed numbers into a 1 x 9 matrix, and push the
             // matrix to our vector of 1 x 9 matrices.
@@ -184,7 +193,7 @@ impl<'a> CacheGrindParser for Profiler<'a> {
 
 
         // put all data in cachegrind struct!
-        Profiler::CacheGrind {
+        Ok(Profiler::CacheGrind {
             ir: ir,
             i1mr: i1mr,
             ilmr: ilmr,
@@ -196,6 +205,6 @@ impl<'a> CacheGrindParser for Profiler<'a> {
             dlmw: dlmw,
             data: sorted_data_matrix,
             functs: sorted_funcs,
-        }
+        })
     }
 }
