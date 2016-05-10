@@ -38,25 +38,26 @@ pub enum Profiler<'a> {
 // Initialize the Profilers
 impl<'a> Profiler<'a> {
     // Initialize CacheGrind
+
     pub fn new_cachegrind() -> Profiler<'a> {
         Profiler::CacheGrind {
-            // total instruction references
+            // total instructions
             ir: f64::NAN,
-            // total i1-cache read misses
+            // total instruction-cache read misses
             i1mr: f64::NAN,
-            // total iL-cache read misses
+            // total LL-cache read misses
             ilmr: f64::NAN,
             // total reads
             dr: f64::NAN,
-            // total d1-cache read misses
+            // total data-cache read misses
             d1mr: f64::NAN,
-            // total dL-cache read misses
+            // total LL-cache read misses
             dlmr: f64::NAN,
-            // total d-cache writes
+            // total data-cache writes
             dw: f64::NAN,
-            // total d1-cache write-misses
+            // total data-cache write-misses
             d1mw: f64::NAN,
-            // total dL cache write misses
+            // total LL cache write misses
             dlmw: f64::NAN,
             // profiler data
             data: OwnedArray::zeros((2, 2)),

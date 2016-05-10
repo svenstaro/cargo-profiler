@@ -82,7 +82,7 @@ impl<'a> CacheGrindParser for Profiler<'a> {
         out_split.retain(|x| re.is_match(x));
 
 
-        let mut funcs: Vec<&str> = Vec::new();
+        let mut funcs: Vec<&'b str> = Vec::new();
         let mut data_vec: Vec<Mat<f64>> = Vec::new();
         // loop through each line and get numbers + func
         for sample in out_split.iter() {
@@ -110,19 +110,7 @@ impl<'a> CacheGrindParser for Profiler<'a> {
                 };
                 numbers.push(number);
             }
-            // let numbers = elems[0..elems.len() - 1]
-            //                   .iter()
-            //                   .map(|x| {
-            //                       match x.trim().replace(",", "").parse::<f64>() {
-            //                           Ok(n) => n,
-            //                           Err(n) => {
-            //                               panic!("regex problem at cachegrind output,failed at \
-            //                                       number {}. Please file a bug.",
-            //                                      n)
-            //                           }
-            //                       }
-            //                   })
-            //                   .collect::<Vec<f64>>();
+
 
             // reshape the vector of parsed numbers into a 1 x 9 matrix, and push the
             // matrix to our vector of 1 x 9 matrices.
@@ -134,6 +122,9 @@ impl<'a> CacheGrindParser for Profiler<'a> {
             // the funcs vector.
             let path = elems[elems.len() - 1].split("/").collect::<Vec<_>>();
             let func = path[path.len() - 1];
+            // let re = regex!(r"\$\w{2}|\w{3}");
+            // let func = re.replace(path[path.len() - 1], "");
+
             funcs.push(func);
         }
 
@@ -168,7 +159,9 @@ impl<'a> CacheGrindParser for Profiler<'a> {
         // these sorted indices. to sort functions, we index the funcs vector with the
         // sorted indices.
         let (mut sorted_data_matrix, indices) = sort_matrix(&data_matrix, sort_col);
-        let mut sorted_funcs = indices.iter().map(|&x| funcs[x]).collect::<Vec<&'b str>>();
+        let mut sorted_funcs: Vec<&'b str> = indices.iter()
+                                                    .map(|&x| funcs[x])
+                                                    .collect::<Vec<&'b str>>();
 
 
         // sum the columns of the data matrix to get total metrics.

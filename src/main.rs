@@ -16,7 +16,7 @@ use parse::callgrind::CallGrindParser;
 use parse::cachegrind::CacheGrindParser;
 use std::process::Command;
 use err::ProfError;
-use argparse::{match_profiler, match_binary, parse_num, get_sort_metric};
+use argparse::{get_profiler, get_binary, get_num, get_sort_metric};
 
 fn main() {
     real_main();
@@ -75,9 +75,10 @@ fn real_main() -> Result<(), ProfError> {
                                                                       by"))))
                       .get_matches();
 
-    let (m, profiler) = try!(match_profiler(&matches));
-    let binary = try!(match_binary(&m));
-    let num = try!(parse_num(&m));
+    // parse arguments from cli call
+    let (m, profiler) = try!(get_profiler(&matches));
+    let binary = try!(get_binary(&m));
+    let num = try!(get_num(&m));
     let sort_metric = try!(get_sort_metric(&m));
 
 

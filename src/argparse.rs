@@ -6,8 +6,9 @@ use err::ProfError;
 use std::path::Path;
 use std::process;
 
-pub fn match_profiler<'a>(matches: &'a ArgMatches)
-                          -> Result<(&'a ArgMatches<'a>, Profiler<'a>), ProfError> {
+/// match the profiler argument
+pub fn get_profiler<'a>(matches: &'a ArgMatches)
+                        -> Result<(&'a ArgMatches<'a>, Profiler<'a>), ProfError> {
     match matches.subcommand_matches("profiler") {
         Some(matches) => {
             match matches.subcommand_matches("callgrind") {
@@ -30,7 +31,8 @@ pub fn match_profiler<'a>(matches: &'a ArgMatches)
     }
 }
 
-pub fn match_binary<'a>(matches: &'a ArgMatches) -> Result<&'a str, ProfError> {
+/// match the binary argument
+pub fn get_binary<'a>(matches: &'a ArgMatches) -> Result<&'a str, ProfError> {
     // read binary argument, make sure it exists in the filesystem
     match matches.value_of("binary") {
         Some(z) => {
@@ -39,7 +41,6 @@ pub fn match_binary<'a>(matches: &'a ArgMatches) -> Result<&'a str, ProfError> {
                 process::exit(1);
 
             }
-
             return Ok(z);
         }
         None => {
@@ -51,7 +52,8 @@ pub fn match_binary<'a>(matches: &'a ArgMatches) -> Result<&'a str, ProfError> {
 
 }
 
-pub fn parse_num(matches: &ArgMatches) -> Result<usize, ProfError> {
+/// parse the number argument into a usize
+pub fn get_num(matches: &ArgMatches) -> Result<usize, ProfError> {
 
     match matches.value_of("n").map(|x| x.parse::<usize>()) {
         Some(Ok(z)) => Ok(z),
@@ -64,6 +66,7 @@ pub fn parse_num(matches: &ArgMatches) -> Result<usize, ProfError> {
 
 }
 
+/// get the cachegrind metric user wants to sort on
 pub fn get_sort_metric(matches: &ArgMatches) -> Result<Metric, ProfError> {
     match matches.value_of("sort") {
         Some("ir") => Ok(Metric::Ir),

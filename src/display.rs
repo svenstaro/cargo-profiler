@@ -4,9 +4,10 @@ use std::fmt;
 use profiler::Profiler;
 use self::ndarray::Axis;
 
+// pretty-print separator of functions
 static DASHES: &'static str = "-----------------------------------------------------------------------";
 
-// Format a number with thousands separators
+/// Format a number with thousands separators. copied from cargo bench.
 fn fmt_thousands_sep(n: &f64, sep: char) -> String {
     let mut n_usize = *n as usize;
     use std::fmt::Write;
@@ -32,7 +33,7 @@ fn fmt_thousands_sep(n: &f64, sep: char) -> String {
     output
 }
 
-// Pretty-print the profiler outputs into user-friendly formats.
+/// Pretty-print the profiler outputs into user-friendly formats.
 impl<'a> fmt::Display for Profiler<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
@@ -49,14 +50,14 @@ impl<'a> fmt::Display for Profiler<'a> {
                                    ref functs } => {
                 write!(f,
                        "\n\x1b[32mTotal Instructions\x1b[0m...{:#}\t\x1b[0m\n\n\
-                       \x1b[32mTotal I1 Read Misses\x1b[0m...{}\t\x1b[0m\
-                       \x1b[32mTotal L1 Read Misses\x1b[0m...{}\n\x1b[0m\
-                       \x1b[32mTotal D1 Reads\x1b[0m...{}\t\x1b[0m\
-                       \x1b[32mTotal D1 Read Misses\x1b[0m...{}\n\x1b[0m\
-                       \x1b[32mTotal LL Read Misses\x1b[0m...{}\t\x1b[0m\
+                       \x1b[32mTotal Instruction Cache Read Misses\x1b[0m...{}\t\x1b[0m\
+                       \x1b[32mTotal LL Cache Read Misses\x1b[0m...{}\n\x1b[0m\
+                       \x1b[32mTotal Data Cache Reads\x1b[0m...{}\t\x1b[0m\
+                       \x1b[32mTotal Data Cache Read Misses\x1b[0m...{}\n\x1b[0m\
+                       \x1b[32mTotal LL Cache Read Misses\x1b[0m...{}\t\x1b[0m\
                        \x1b[32mTotal Writes\x1b[0m...{}\n\x1b[0m\
-                       \x1b[32mTotal D1 Write Misses\x1b[0m...{}\t\x1b[0m\
-                       \x1b[32mTotal LL Write Misses\x1b[0m...{}\x1b[0m\n\n\n",
+                       \x1b[32mTotal Data Cache Write Misses\x1b[0m...{}\t\x1b[0m\
+                       \x1b[32mTotal LL Cache Write Misses\x1b[0m...{}\x1b[0m\n\n\n",
                        fmt_thousands_sep(ir, ','),
                       fmt_thousands_sep(i1mr, ','),
                        fmt_thousands_sep(ilmr, ','),
@@ -72,7 +73,7 @@ impl<'a> fmt::Display for Profiler<'a> {
                         \x1b[1;36mD1mr \x1b[1;36mDLmr  \x1b[1;36mDw  \x1b[1;36mD1mw \
                         \x1b[1;36mDLmw\n");
 
-                for (ref x, &y) in data.axis_iter(Axis(0)).zip(functs.iter()) {
+                for (ref x, y) in data.axis_iter(Axis(0)).zip(functs.iter()) {
                     write!(f,
                            "\x1b[0m{:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {}\n",
                            x[0] / ir,
