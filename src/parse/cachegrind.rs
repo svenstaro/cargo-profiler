@@ -5,6 +5,7 @@ use profiler::Profiler;
 use std::f64;
 use std::cmp::Ordering::Less;
 use err::ProfError;
+use std::process;
 /// initialize matrix object
 pub type Mat<A> = OwnedArray<A, (Ix, Ix)>;
 
@@ -102,7 +103,10 @@ impl<'a> CacheGrindParser for Profiler<'a> {
             for elem in elems[0..elems.len() - 1].iter() {
                 let number = match elem.trim().replace(",", "").parse::<f64>() {
                     Ok(n) => n,
-                    Err(_) => return Err(ProfError::RegexError),
+                    Err(_) => {
+                        println!("{}", ProfError::RegexError);
+                        process::exit(1);
+                    }
                 };
                 numbers.push(number);
             }

@@ -4,6 +4,7 @@ use profiler::Profiler;
 use parse::cachegrind::Metric;
 use err::ProfError;
 use std::path::Path;
+use std::process;
 
 pub fn match_profiler<'a>(matches: &'a ArgMatches)
                           -> Result<(&'a ArgMatches<'a>, Profiler<'a>), ProfError> {
@@ -14,12 +15,18 @@ pub fn match_profiler<'a>(matches: &'a ArgMatches)
                 None => {
                     match matches.subcommand_matches("cachegrind") {
                         Some(matches) => Ok((matches, Profiler::new_cachegrind())),
-                        None => return Err(ProfError::InvalidProfiler),
+                        None => {
+                            println!("{}", ProfError::InvalidProfiler);
+                            process::exit(1);
+                        }
                     }
                 }
             }
         }
-        None => return Err(ProfError::InvalidProfiler),
+        None => {
+            println!("{}", ProfError::InvalidProfiler);
+            process::exit(1);
+        }
     }
 }
 
@@ -28,12 +35,17 @@ pub fn match_binary<'a>(matches: &'a ArgMatches) -> Result<&'a str, ProfError> {
     match matches.value_of("binary") {
         Some(z) => {
             if !Path::new(z).exists() {
-                return Err(ProfError::InvalidBinary);
+                println!("{}", ProfError::InvalidBinary);
+                process::exit(1);
+
             }
 
             return Ok(z);
         }
-        None => return Err(ProfError::InvalidBinary),
+        None => {
+            println!("{}", ProfError::InvalidBinary);
+            process::exit(1);
+        }
     }
 
 
@@ -43,7 +55,10 @@ pub fn parse_num(matches: &ArgMatches) -> Result<usize, ProfError> {
 
     match matches.value_of("n").map(|x| x.parse::<usize>()) {
         Some(Ok(z)) => Ok(z),
-        Some(Err(_)) => return Err(ProfError::InvalidNum),
+        Some(Err(_)) => {
+            println!("{}", ProfError::InvalidNum);
+            process::exit(1);
+        }
         None => Ok(10000), // some arbitrarily large number...
     }
 
@@ -61,6 +76,10 @@ pub fn get_sort_metric(matches: &ArgMatches) -> Result<Metric, ProfError> {
         Some("d1mw") => Ok(Metric::D1mw),
         Some("dlmw") => Ok(Metric::Dlmw),
         None => Ok(Metric::NAN),
-        _ => return Err(ProfError::InvalidSortMetric),
+        _ => {
+            println!("{}", ProfError::InvalidSortMetric);
+            process::exit(1);
+        }
+
     }
 }

@@ -4,12 +4,8 @@ use std::io::Error as ioError;
 
 
 #[derive(Debug)]
-/// Represents potential errors that may occur when performing lookups
+/// Represents potential errors that may occur when profiling
 pub enum ProfError {
-    /// Represents Network errors, including access violations to the GSBL PI
-    /// For when greater than gsbrs::url_limit urls are queried
-    CallGrindError(String),
-    /// Wraps a std::io::Error
     RegexError,
     InvalidProfiler,
     InvalidBinary,
@@ -22,13 +18,34 @@ pub enum ProfError {
 impl fmt::Display for ProfError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            ProfError::CallGrindError(ref e) => write!(f, "Callgrind error {}", e),
-            ProfError::RegexError => write!(f, "Regex error. File bug."),
-            ProfError::InvalidProfiler => write!(f, "Invalid profiler"),
-            ProfError::InvalidBinary => write!(f, "Invalid binary"),
-            ProfError::InvalidNum => write!(f, "Invalid number"),
-            ProfError::InvalidSortMetric => write!(f, "Invalid sort metric"),
-            ProfError::IOError(ref err) => write!(f, "IO Error: {}", err),
+            ProfError::RegexError => {
+                write!(f,
+                       "\x1b[1;31mmerror: \x1b[0mregex error -- please file a bug.")
+            }
+            ProfError::InvalidProfiler => {
+                write!(f,
+                       "\x1b[1;31merror: \x1b[0minvalid profiler. cargo profiler currently \
+                        supports callgrind and cachegrind.")
+            }
+            ProfError::InvalidBinary => {
+                write!(f,
+                       "\x1b[1;31merror: \x1b[0minvalid binary. make sure binary exists.")
+            }
+            ProfError::InvalidNum => {
+                write!(f,
+                       "\x1b[1;31merror: \x1b[0minvalid number. make sure number is a positive \
+                        integer.")
+            }
+            ProfError::InvalidSortMetric => {
+                write!(f,
+                       "\x1b[1;31merror: \x1b[0minvalid metric to sort on. available cachegrind \
+                        metrics are \nir, i1mr, ilmr, dr, d1mr, dlmr, dw, d1mw, and dlmw")
+            }
+            ProfError::IOError(ref err) => {
+                write!(f,
+                       "\x1b[1;31merror: \x1b[0mio error: {} -- please file a bug.",
+                       err)
+            }
 
         }
     }
@@ -37,7 +54,6 @@ impl fmt::Display for ProfError {
 impl error::Error for ProfError {
     fn description(&self) -> &str {
         match *self {
-            ProfError::CallGrindError(_) => "Callgrind Error. File Bug.",
             ProfError::RegexError => "Regex error. file bug.",
             ProfError::InvalidProfiler => "Invalid Profiler.",
             ProfError::InvalidBinary => "Invalid Binary.",
@@ -49,7 +65,6 @@ impl error::Error for ProfError {
 
     fn cause(&self) -> Option<&error::Error> {
         match *self {
-            ProfError::CallGrindError(_) => None,
             ProfError::RegexError => None,
             ProfError::InvalidProfiler => None,
             ProfError::InvalidBinary => None,
