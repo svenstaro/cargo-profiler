@@ -89,11 +89,12 @@ fn real_main() -> Result<(), ProfError> {
 
     match profiler {
         Profiler::CallGrind { .. } => {
-            println!("\nProfiling \x1b[1;36m{} \x1b[0mwith \x1b[1;36mcallgrind...",
+            println!("\n\x1b[1;33mProfiling \x1b[1;0m{} \x1b[0mwith \x1b[1;36mcallgrind\x1b[0m...",
                      name)
         }
         Profiler::CacheGrind { .. } => {
-            println!("\nProfiling \x1b[1;36m{} \x1b[0mwith \x1b[1;36mcachegrind...",
+            println!("\n\x1b[1;33mProfiling \x1b[1;0m{} \x1b[0mwith \
+                      \x1b[1;36mcachegrind\x1b[0m...",
                      name)
         }
     };

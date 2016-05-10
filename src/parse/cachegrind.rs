@@ -13,13 +13,13 @@ pub type Mat<A> = OwnedArray<A, (Ix, Ix)>;
 pub enum Metric {
     Ir,
     I1mr,
-    Ilmr,
+    ILmr,
     Dr,
     D1mr,
-    Dlmr,
+    LLmr,
     Dw,
     D1mw,
-    Dlmw,
+    LLmw,
     NAN,
 }
 
@@ -128,7 +128,7 @@ impl<'a> CacheGrindParser for Profiler<'a> {
             funcs.push(func);
         }
 
-        // stack all the 1 x 9 matrices in data to a 9 x n  matrix.
+        // stack all the 1 x 9 matrices in data to a n x 9  matrix.
         let data_matrix = match stack(Axis(1),
                                       &data_vec.iter()
                                                .map(|x| x.view())
@@ -144,13 +144,13 @@ impl<'a> CacheGrindParser for Profiler<'a> {
         let sort_col = match sort_metric {
             Metric::Ir => data_matrix.column(0),
             Metric::I1mr => data_matrix.column(1),
-            Metric::Ilmr => data_matrix.column(2),
+            Metric::ILmr => data_matrix.column(2),
             Metric::Dr => data_matrix.column(3),
             Metric::D1mr => data_matrix.column(4),
-            Metric::Dlmr => data_matrix.column(5),
+            Metric::LLmr => data_matrix.column(5),
             Metric::Dw => data_matrix.column(6),
             Metric::D1mw => data_matrix.column(7),
-            Metric::Dlmw => data_matrix.column(8),
+            Metric::LLmw => data_matrix.column(8),
             Metric::NAN => data_matrix.column(0),
         };
 
@@ -170,10 +170,10 @@ impl<'a> CacheGrindParser for Profiler<'a> {
         let ilmr = sorted_data_matrix.column(2).scalar_sum();
         let dr = sorted_data_matrix.column(3).scalar_sum();
         let d1mr = sorted_data_matrix.column(4).scalar_sum();
-        let dlmr = sorted_data_matrix.column(5).scalar_sum();
+        let llmr = sorted_data_matrix.column(5).scalar_sum();
         let dw = sorted_data_matrix.column(6).scalar_sum();
         let d1mw = sorted_data_matrix.column(7).scalar_sum();
-        let dlmw = sorted_data_matrix.column(8).scalar_sum();
+        let llmw = sorted_data_matrix.column(8).scalar_sum();
 
 
         // parse the limit argument n, and take the first n values of data matrix/funcs
@@ -196,10 +196,10 @@ impl<'a> CacheGrindParser for Profiler<'a> {
             ilmr: ilmr,
             dr: dr,
             d1mr: d1mr,
-            dlmr: dlmr,
+            llmr: llmr,
             dw: dw,
             d1mw: d1mw,
-            dlmw: dlmw,
+            llmw: llmw,
             data: sorted_data_matrix,
             functs: sorted_funcs,
         })
