@@ -20,7 +20,7 @@ impl fmt::Display for ProfError {
         match *self {
             ProfError::RegexError => {
                 write!(f,
-                       "\x1b[1;31mmerror: \x1b[0mregex error -- please file a bug.")
+                       "\x1b[1;31merror: \x1b[0mregex error -- please file a bug.")
             }
             ProfError::InvalidProfiler => {
                 write!(f,
