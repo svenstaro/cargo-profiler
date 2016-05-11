@@ -9,7 +9,11 @@ First install valgrind:
 $ sudo apt-get install valgrind
 ```
 
-Then, build the binary.
+Then you can install `cargo-profiler` via `cargo install --git`.
+
+
+Alternatively, you can clone this repo and build the binary from the source. 
+
 ```
 $ cargo build --release
 ```
