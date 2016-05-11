@@ -192,7 +192,6 @@ impl CacheGrindParser for Profiler {
         let d1mw = sorted_data_matrix.column(7).scalar_sum();
         let dlmw = sorted_data_matrix.column(8).scalar_sum();
 
-        // println!("{:?}", mat.dim());
         // parse the limit argument n, and take the first n values of data matrix/funcs
         // vector accordingly.
         if num < sorted_data_matrix.rows() {

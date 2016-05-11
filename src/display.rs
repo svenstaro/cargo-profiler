@@ -56,15 +56,7 @@ impl fmt::Display for Profiler {
                         \n\x1b[32mTotal LL D-Cache Misses\x1b[0m...{} ({}%)\t\x1b[0m\n\n\
 
                     ",
-                //    \t\x1b[0mL1 I-Cache Read Misses\x1b[0m...{} ({:.1}%)\n\x1b[0m\
-                //    \t\x1b[0mLL I-Cache Read Misses\x1b[0m...{} ({:.1}%)\n\n\x1b[0m\
-                //    \x1b[32mTotal D Cache Reads\x1b[0m...{}\x1b[0m\n\
-                //    \t\x1b[0mL1 I-Cache Read Misses\x1b[0m...{} ({:.1}%)\n\x1b[0m\
-                //    \t\x1b[0mD1 Cache Write Misses\x1b[0m...{} ({:.1}%)\n\x1b[0m\
-                //
-                //    \x1b[32mTotal LL Cache Writes\x1b[0m...{}\x1b[0m\n\
-                //    \t\x1b[0mLL Cache Read Misses\x1b[0m...{} ({:.1}%)\n\n\x1b[0m\
-                //    \t\x1b[0mLL Cache Write Misses\x1b[0m...{} ({:.1}%)\x1b[0m\n\n\n",
+
                        fmt_thousands_sep((ir + dr + dw), ','),
                        fmt_thousands_sep(*i1mr, ','),
                        fmt_thousands_sep(i1mr / (ir + dr + dw) * 100., ','),
