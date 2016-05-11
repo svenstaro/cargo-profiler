@@ -1,8 +1,11 @@
 extern crate ndarray;
+extern crate regex;
+
 use std::process::Command;
 use profiler::Profiler;
 use std::f64;
 use err::ProfError;
+use regex::Regex;
 
 // Parser trait. To parse the output of Profilers, we first have to get their output from
 // the command line, and then parse the output into respective structs.
@@ -12,7 +15,7 @@ pub trait CallGrindParser {
 }
 
 
-impl<'a> CallGrindParser for Profiler<'a> {
+impl CallGrindParser for Profiler {
     // Get profiler output from stdout.
     fn callgrind_cli(&self, binary: &str) -> Result<String, ProfError> {
 
@@ -39,11 +42,16 @@ impl<'a> CallGrindParser for Profiler<'a> {
 
         // regex identifies lines that start with digits and have characters that commonly
         // show up in file paths
-        let re = regex!(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*");
-        out_split.retain(|x| re.is_match(x));
+        lazy_static! {
+           static ref callgrind_regex : Regex = Regex::new(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*").unwrap();
+           static ref compiler_trash: Regex = Regex::new(r"\$\w{2}\$|\$\w{3}\$").unwrap();
+
+       }
+
+        out_split.retain(|x| callgrind_regex.is_match(x));
 
 
-        let mut funcs: Vec<&'b str> = Vec::new();
+        let mut funcs: Vec<String> = Vec::new();
         let mut data_vec: Vec<f64> = Vec::new();
         // loop through each line and get numbers + func
         for sample in out_split.iter() {
@@ -71,6 +79,8 @@ impl<'a> CallGrindParser for Profiler<'a> {
             let path = elems[1].split(" ").collect::<Vec<_>>();
             let cleaned_path = path[0].split("/").collect::<Vec<_>>();
             let func = cleaned_path[cleaned_path.len() - 1];
+            let func = compiler_trash.replace_all(func, "..");
+            println!("{:?}", func);
             funcs.push(func)
 
         }

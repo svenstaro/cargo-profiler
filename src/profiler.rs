@@ -6,7 +6,7 @@ use std::f64;
 pub type Mat<A> = OwnedArray<A, (Ix, Ix)>;
 
 // Profiler enum. We have two profilers: CacheGrind and CallGrind.
-pub enum Profiler<'a> {
+pub enum Profiler {
     // CachGrind holds the parsed objects of
     // `valgrind --tool=cachegrind -cachegrind-out-file=cachegrind.out
     // && cg_annotate cachegrind.out`
@@ -21,7 +21,7 @@ pub enum Profiler<'a> {
         d1mw: f64,
         llmw: f64,
         data: Mat<f64>,
-        functs: Vec<&'a str>,
+        functs: Vec<String>,
     },
 
     // Call holds the parsed objects of
@@ -30,16 +30,16 @@ pub enum Profiler<'a> {
     CallGrind {
         total_instructions: f64,
         instructions: Vec<f64>,
-        functs: Vec<&'a str>,
+        functs: Vec<String>,
     },
 }
 
 
 // Initialize the Profilers
-impl<'a> Profiler<'a> {
+impl Profiler {
     // Initialize CacheGrind
 
-    pub fn new_cachegrind() -> Profiler<'a> {
+    pub fn new_cachegrind() -> Profiler {
         Profiler::CacheGrind {
             // total instructions
             ir: f64::NAN,
@@ -62,18 +62,18 @@ impl<'a> Profiler<'a> {
             // profiler data
             data: OwnedArray::zeros((2, 2)),
             // profiled functions in binary
-            functs: vec![""],
+            functs: Vec::new(),
         }
     }
     // Initialize CallGrind
-    pub fn new_callgrind() -> Profiler<'a> {
+    pub fn new_callgrind() -> Profiler {
         Profiler::CallGrind {
             // total instruction calls
             total_instructions: f64::NAN,
             // instruction data
-            instructions: vec![0.],
+            instructions: Vec::new(),
             // profiled functions in binary
-            functs: vec![""],
+            functs: Vec::new(),
         }
     }
 }

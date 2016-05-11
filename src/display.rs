@@ -34,7 +34,7 @@ fn fmt_thousands_sep(n: f64, sep: char) -> String {
 }
 
 /// Pretty-print the profiler outputs into user-friendly formats.
-impl<'a> fmt::Display for Profiler<'a> {
+impl fmt::Display for Profiler {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Profiler::CacheGrind { ref ir,
@@ -77,8 +77,8 @@ impl<'a> fmt::Display for Profiler<'a> {
                 );
                 write!(f,
                        " \x1b[1;36mIr  \x1b[1;36mI1mr \x1b[1;36mILmr  \x1b[1;36mDr  \
-                        \x1b[1;36mD1mr \x1b[1;36mllmr  \x1b[1;36mDw  \x1b[1;36mD1mw \
-                        \x1b[1;36mllmw\n");
+                        \x1b[1;36mD1mr \x1b[1;36mLLmr  \x1b[1;36mDw  \x1b[1;36mD1mw \
+                        \x1b[1;36mLLmw\n");
 
                 for (ref x, y) in data.axis_iter(Axis(0)).zip(functs.iter()) {
                     write!(f,
@@ -104,7 +104,7 @@ impl<'a> fmt::Display for Profiler<'a> {
                        "\n\x1b[32mTotal Instructions\x1b[0m...{}\n\n\x1b[0m",
                        fmt_thousands_sep(*total_instructions, ','));
 
-                for (&x, &y) in instructions.iter().zip(functs.iter()) {
+                for (&x, ref y) in instructions.iter().zip(functs.iter()) {
                     {
 
                         let perc = x / total_instructions * 100.;

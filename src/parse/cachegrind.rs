@@ -1,4 +1,6 @@
 extern crate ndarray;
+extern crate regex;
+
 use std::process::Command;
 use self::ndarray::{Axis, stack, OwnedArray, ArrayView, Ix};
 use profiler::Profiler;
@@ -6,6 +8,7 @@ use std::f64;
 use std::cmp::Ordering::Less;
 use err::ProfError;
 use std::process;
+use regex::Regex;
 /// initialize matrix object
 pub type Mat<A> = OwnedArray<A, (Ix, Ix)>;
 
@@ -48,7 +51,7 @@ pub trait CacheGrindParser {
 
 
 
-impl<'a> CacheGrindParser for Profiler<'a> {
+impl CacheGrindParser for Profiler {
     /// Get profiler output from stdout.
     fn cachegrind_cli(&self, binary: &str) -> Result<String, ProfError> {
 
@@ -78,12 +81,18 @@ impl<'a> CacheGrindParser for Profiler<'a> {
 
         // regex identifies lines that start with digits and have characters that commonly
         // show up in file paths
-        let re = regex!(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*");
-        out_split.retain(|x| re.is_match(x));
+        lazy_static! {
+           static ref cachegrind_regex : Regex = Regex::new(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*").unwrap();
+           static ref compiler_trash: Regex = Regex::new(r"\$\w{2}\$|\$\w{3}\$").unwrap();
+
+       }
+
+        out_split.retain(|x| cachegrind_regex.is_match(x));
 
 
-        let mut funcs: Vec<&'b str> = Vec::new();
+        let mut funcs: Vec<String> = Vec::new();
         let mut data_vec: Vec<Mat<f64>> = Vec::new();
+
         // loop through each line and get numbers + func
         for sample in out_split.iter() {
 
@@ -91,7 +100,7 @@ impl<'a> CacheGrindParser for Profiler<'a> {
             // (numbers + func)
             let mut elems = sample.trim()
                                   .split(" ")
-                                  .collect::<Vec<_>>();
+                                  .collect::<Vec<&'b str>>();
 
             // remove any empty strings
             elems.retain(|x| x.to_string() != "");
@@ -108,6 +117,7 @@ impl<'a> CacheGrindParser for Profiler<'a> {
                         process::exit(1);
                     }
                 };
+
                 numbers.push(number);
             }
 
@@ -120,13 +130,20 @@ impl<'a> CacheGrindParser for Profiler<'a> {
             // the last element in data_elems is the function file path.
             // get the file in the file-path (which includes the function) and push that to
             // the funcs vector.
-            let path = elems[elems.len() - 1].split("/").collect::<Vec<_>>();
+            let path = elems[elems.len() - 1].split("/").collect::<Vec<&'b str>>();
             let func = path[path.len() - 1];
-            // let re = regex!(r"\$\w{2}|\w{3}");
-            // let func = re.replace(path[path.len() - 1], "");
 
+            let mut func = compiler_trash.replace_all(func, "");
+            let idx = func.rfind("::").unwrap_or(func.len());
+            func.drain(idx..).collect::<String>();
             funcs.push(func);
+
         }
+
+
+
+
+
 
         // stack all the 1 x 9 matrices in data to a n x 9  matrix.
         let data_matrix = match stack(Axis(1),
@@ -159,9 +176,10 @@ impl<'a> CacheGrindParser for Profiler<'a> {
         // these sorted indices. to sort functions, we index the funcs vector with the
         // sorted indices.
         let (mut sorted_data_matrix, indices) = sort_matrix(&data_matrix, sort_col);
-        let mut sorted_funcs: Vec<&'b str> = indices.iter()
-                                                    .map(|&x| funcs[x])
-                                                    .collect::<Vec<&'b str>>();
+        let mut sorted_funcs: Vec<String> = indices.iter()
+                                                   .map(|&x| (&funcs[x]).to_owned())
+                                                   .collect::<Vec<String>>();
+
 
 
         // sum the columns of the data matrix to get total metrics.

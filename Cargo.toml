@@ -8,7 +8,7 @@ clap = "*"
 regex = "*"
 regex_macros = "*"
 ndarray = "*"
-
+lazy_static = "*"
 [lib]
 name="profiler"
 lib="src/lib.rs"

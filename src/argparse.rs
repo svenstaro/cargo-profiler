@@ -8,7 +8,7 @@ use std::process;
 
 /// match the profiler argument
 pub fn get_profiler<'a>(matches: &'a ArgMatches)
-                        -> Result<(&'a ArgMatches<'a>, Profiler<'a>), ProfError> {
+                        -> Result<(&'a ArgMatches<'a>, Profiler), ProfError> {
     match matches.subcommand_matches("profiler") {
         Some(matches) => {
             match matches.subcommand_matches("callgrind") {
