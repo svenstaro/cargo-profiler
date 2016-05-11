@@ -42,10 +42,10 @@ impl fmt::Display for Profiler {
                                    ref ilmr,
                                    ref dr,
                                    ref d1mr,
-                                   ref llmr,
+                                   ref dlmr,
                                    ref dw,
                                    ref d1mw,
-                                   ref llmw,
+                                   ref dlmw,
                                    ref data,
                                    ref functs } => {
                 write!(f,
@@ -72,13 +72,13 @@ impl fmt::Display for Profiler {
                        fmt_thousands_sep(ilmr / (ir + dr + dw) * 100., ','),
                        fmt_thousands_sep(d1mr + d1mw, ','),
                        fmt_thousands_sep((d1mr + d1mw) / (ir + dr + dw) * 100., ','),
-                       fmt_thousands_sep(llmr + llmw, ','),
-                       fmt_thousands_sep((llmr + llmw) / (ir + dr + dw) * 100., ','),
+                       fmt_thousands_sep(dlmr + dlmw, ','),
+                       fmt_thousands_sep((dlmr + dlmw) / (ir + dr + dw) * 100., ','),
                 );
                 write!(f,
                        " \x1b[1;36mIr  \x1b[1;36mI1mr \x1b[1;36mILmr  \x1b[1;36mDr  \
                         \x1b[1;36mD1mr \x1b[1;36mLLmr  \x1b[1;36mDw  \x1b[1;36mD1mw \
-                        \x1b[1;36mLLmw\n");
+                        \x1b[1;36mLL    mw\n");
 
                 for (ref x, y) in data.axis_iter(Axis(0)).zip(functs.iter()) {
                     write!(f,
@@ -88,10 +88,10 @@ impl fmt::Display for Profiler {
                            x[2] / ilmr,
                            x[3] / dr,
                            x[4] / d1mr,
-                           x[5] / llmr,
+                           x[5] / dlmr,
                            x[6] / dw,
                            x[7] / d1mw,
-                           x[8] / llmw,
+                           x[8] / dlmw,
                            y);
                     println!("{}", DASHES);
                 }

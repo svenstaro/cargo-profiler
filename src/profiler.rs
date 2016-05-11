@@ -16,10 +16,10 @@ pub enum Profiler {
         ilmr: f64,
         dr: f64,
         d1mr: f64,
-        llmr: f64,
+        dlmr: f64,
         dw: f64,
         d1mw: f64,
-        llmw: f64,
+        dlmw: f64,
         data: Mat<f64>,
         functs: Vec<String>,
     },
@@ -52,13 +52,13 @@ impl Profiler {
             // total data-cache read misses
             d1mr: f64::NAN,
             // total LL-cache read misses
-            llmr: f64::NAN,
+            dlmr: f64::NAN,
             // total data-cache writes
             dw: f64::NAN,
             // total data-cache write-misses
             d1mw: f64::NAN,
             // total LL cache write misses
-            llmw: f64::NAN,
+            dlmw: f64::NAN,
             // profiler data
             data: OwnedArray::zeros((2, 2)),
             // profiled functions in binary

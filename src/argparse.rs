@@ -74,10 +74,10 @@ pub fn get_sort_metric(matches: &ArgMatches) -> Result<Metric, ProfError> {
         Some("ilmr") => Ok(Metric::ILmr),
         Some("dr") => Ok(Metric::Dr),
         Some("d1mr") => Ok(Metric::D1mr),
-        Some("llmr") => Ok(Metric::LLmr),
+        Some("dlmr") => Ok(Metric::DLmr),
         Some("dw") => Ok(Metric::Dw),
         Some("d1mw") => Ok(Metric::D1mw),
-        Some("llmw") => Ok(Metric::LLmw),
+        Some("dlmw") => Ok(Metric::DLmw),
         None => Ok(Metric::NAN),
         _ => {
             println!("{}", ProfError::InvalidSortMetric);
