@@ -43,7 +43,7 @@ impl CallGrindParser for Profiler {
         // regex identifies lines that start with digits and have characters that commonly
         // show up in file paths
         lazy_static! {
-           static ref callgrind_regex : Regex = Regex::new(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*").unwrap();
+           static ref callgrind_regex : Regex = Regex::new(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*@*-*|\d+\s*[a-zA-Z]*$*_*\?+:*/*\.*-*@*-*").unwrap();
            static ref compiler_trash: Regex = Regex::new(r"\$\w{2}\$|\$\w{3}\$").unwrap();
 
        }
@@ -79,7 +79,9 @@ impl CallGrindParser for Profiler {
             let path = elems[1].split(" ").collect::<Vec<_>>();
             let cleaned_path = path[0].split("/").collect::<Vec<_>>();
             let func = cleaned_path[cleaned_path.len() - 1];
-            let func = compiler_trash.replace_all(func, "..");
+            let mut func = compiler_trash.replace_all(func, "..");
+            let idx = func.rfind("::").unwrap_or(func.len());
+            func.drain(idx..).collect::<String>();
             funcs.push(func)
 
         }

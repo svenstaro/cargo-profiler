@@ -82,13 +82,12 @@ impl CacheGrindParser for Profiler {
         // regex identifies lines that start with digits and have characters that commonly
         // show up in file paths
         lazy_static! {
-           static ref cachegrind_regex : Regex = Regex::new(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*").unwrap();
+           static ref cachegrind_regex : Regex = Regex::new(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*@*-*|\d+\s*[a-zA-Z]*$*_*\?+:*/*\.*-*@*-*").unwrap();
            static ref compiler_trash: Regex = Regex::new(r"\$\w{2}\$|\$\w{3}\$").unwrap();
 
        }
 
         out_split.retain(|x| cachegrind_regex.is_match(x));
-
 
         let mut funcs: Vec<String> = Vec::new();
         let mut data_vec: Vec<Mat<f64>> = Vec::new();
@@ -101,7 +100,6 @@ impl CacheGrindParser for Profiler {
             let mut elems = sample.trim()
                                   .split(" ")
                                   .collect::<Vec<&'b str>>();
-
             // remove any empty strings
             elems.retain(|x| x.to_string() != "");
 
@@ -151,7 +149,7 @@ impl CacheGrindParser for Profiler {
                                                .map(|x| x.view())
                                                .collect::<Vec<_>>()
                                                .as_slice()) {
-            Ok(m) => m,
+            Ok(m) => m.t().to_owned(),
             Err(_) => panic!("metric data arrays are misaligned."),
         };
 
@@ -176,6 +174,7 @@ impl CacheGrindParser for Profiler {
         // these sorted indices. to sort functions, we index the funcs vector with the
         // sorted indices.
         let (mut sorted_data_matrix, indices) = sort_matrix(&data_matrix, sort_col);
+
         let mut sorted_funcs: Vec<String> = indices.iter()
                                                    .map(|&x| (&funcs[x]).to_owned())
                                                    .collect::<Vec<String>>();
@@ -193,7 +192,7 @@ impl CacheGrindParser for Profiler {
         let d1mw = sorted_data_matrix.column(7).scalar_sum();
         let llmw = sorted_data_matrix.column(8).scalar_sum();
 
-
+        // println!("{:?}", mat.dim());
         // parse the limit argument n, and take the first n values of data matrix/funcs
         // vector accordingly.
         if num < sorted_data_matrix.rows() {
