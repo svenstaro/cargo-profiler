@@ -80,7 +80,6 @@ impl CallGrindParser for Profiler {
             let cleaned_path = path[0].split("/").collect::<Vec<_>>();
             let func = cleaned_path[cleaned_path.len() - 1];
             let func = compiler_trash.replace_all(func, "..");
-            println!("{:?}", func);
             funcs.push(func)
 
         }
