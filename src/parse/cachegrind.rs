@@ -150,7 +150,10 @@ impl CacheGrindParser for Profiler {
                                                .collect::<Vec<_>>()
                                                .as_slice()) {
             Ok(m) => m.t().to_owned(),
-            Err(_) => panic!("metric data arrays are misaligned."),
+            Err(_) => {
+                println!("{}", ProfError::MisalignedData);
+                process::exit(1);
+            }
         };
 
 

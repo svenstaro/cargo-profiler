@@ -13,6 +13,7 @@ pub enum ProfError {
     InvalidSortMetric,
     /// Wraps a std::io::Error
     IOError(ioError),
+    MisalignedData,
 }
 
 impl fmt::Display for ProfError {
@@ -39,14 +40,19 @@ impl fmt::Display for ProfError {
             ProfError::InvalidSortMetric => {
                 write!(f,
                        "\x1b[1;31merror: \x1b[0minvalid metric to sort on. available cachegrind \
-                        metrics are \nir, i1mr, ilmr, dr, d1mr, dlmr, dw, d1mw, and dlmw")
+                        metrics are \nir, i1mr, ilmr, dr, d1mr, dlmr, dw, d1mw, and dlmw. Check \
+                        README for details on these metrics.")
             }
             ProfError::IOError(ref err) => {
                 write!(f,
                        "\x1b[1;31merror: \x1b[0mio error: {} -- please file a bug.",
                        err)
             }
-
+            ProfError::MisalignedData => {
+                write!(f,
+                       "\x1b[1;31merror: \x1b[0mmisaligned data arrays due to regex error -- \
+                        please file a bug.")
+            }
         }
     }
 }
@@ -59,7 +65,9 @@ impl error::Error for ProfError {
             ProfError::InvalidBinary => "Invalid Binary.",
             ProfError::InvalidNum => "Invalid number.",
             ProfError::InvalidSortMetric => "Invalid sort metric.",
+            ProfError::MisalignedData => "Misaligned Data. File bug.",
             ProfError::IOError(ref err) => err.description(),
+
         }
     }
 
@@ -70,6 +78,7 @@ impl error::Error for ProfError {
             ProfError::InvalidBinary => None,
             ProfError::InvalidNum => None,
             ProfError::InvalidSortMetric => None,
+            ProfError::MisalignedData => None,
             ProfError::IOError(ref err) => Some(err),
 
         }

@@ -6,6 +6,7 @@ use profiler::Profiler;
 use std::f64;
 use err::ProfError;
 use regex::Regex;
+use std::process;
 
 // Parser trait. To parse the output of Profilers, we first have to get their output from
 // the command line, and then parse the output into respective structs.
@@ -64,10 +65,9 @@ impl CallGrindParser for Profiler {
             // data_elems is the function file path.
             let data_row = match elems[0].trim().replace(",", "").parse::<f64>() {
                 Ok(rep) => rep,
-                Err(rep) => {
-                    panic!("regex problem at callgrind output, failed at value {}. Please file a \
-                            bug.",
-                           rep)
+                Err(_) => {
+                    println!("{}", ProfError::RegexError);
+                    process::exit(1);
                 }
             };
 
