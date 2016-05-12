@@ -1,0 +1,17 @@
+language: rust
+
+sudo: false
+
+rust:
+  - nightly
+
+script:
+  - |
+      cargo build
+
+notifications:
+  email:
+    - sgrangan01@gmail.com
+
+branches:
+  only: master
