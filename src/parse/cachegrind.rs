@@ -4,7 +4,6 @@ extern crate regex;
 use std::process::Command;
 use self::ndarray::{Axis, stack, OwnedArray, ArrayView, Ix};
 use profiler::Profiler;
-use std::f64;
 use std::cmp::Ordering::Less;
 use err::ProfError;
 use std::process;

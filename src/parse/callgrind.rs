@@ -2,7 +2,6 @@ extern crate regex;
 
 use std::process::Command;
 use profiler::Profiler;
-use std::f64;
 use err::ProfError;
 use regex::Regex;
 use std::process;
