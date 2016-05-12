@@ -4,6 +4,8 @@ Cargo subcommand to profile binaries.
 
 ## To install
 
+NOTE: This subcommand can only be used on Linux machines. 
+
 First install valgrind:
 
 ```
