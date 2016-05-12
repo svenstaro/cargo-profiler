@@ -101,7 +101,17 @@ Total LL D-Cache Misses...8,451 (0%)
 
 ```
 
+## What are the cachegrind metrics? 
 
+* Ir -> Total Instructions
+* I1mr -> Level 1 I-Cache misses
+* ILmr -> Last Level I-Cache misses
+* Dr -> Total Memory Reads
+* D1mr -> Level 1 D-Cache read misses
+* DLmr -> Last Level D-cache read misses
+* Dw -> Total Memory Writes
+* D1mw -> Level 1 D-Cache write misses
+* DLmw -> Last Level D-cache write misses
 
 ## TODO
 
