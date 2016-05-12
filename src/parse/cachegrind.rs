@@ -82,12 +82,12 @@ impl CacheGrindParser for Profiler {
         // regex identifies lines that start with digits and have characters that commonly
         // show up in file paths
         lazy_static! {
-           static ref cachegrind_regex : Regex = Regex::new(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*@*-*|\d+\s*[a-zA-Z]*$*_*\?+:*/*\.*-*@*-*").unwrap();
-           static ref compiler_trash: Regex = Regex::new(r"\$\w{2}\$|\$\w{3}\$").unwrap();
+           static ref CACHEGRIND_REGEX : Regex = Regex::new(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*@*-*|\d+\s*[a-zA-Z]*$*_*\?+:*/*\.*-*@*-*").unwrap();
+           static ref COMPILER_TRASH: Regex = Regex::new(r"\$\w{2}\$|\$\w{3}\$").unwrap();
 
        }
 
-        out_split.retain(|x| cachegrind_regex.is_match(x));
+        out_split.retain(|x| CACHEGRIND_REGEX.is_match(x));
 
         let mut funcs: Vec<String> = Vec::new();
         let mut data_vec: Vec<Mat<f64>> = Vec::new();
@@ -131,7 +131,7 @@ impl CacheGrindParser for Profiler {
             let path = elems[elems.len() - 1].split("/").collect::<Vec<&'b str>>();
             let func = path[path.len() - 1];
 
-            let mut func = compiler_trash.replace_all(func, "");
+            let mut func = COMPILER_TRASH.replace_all(func, "");
             let idx = func.rfind("::").unwrap_or(func.len());
             func.drain(idx..).collect::<String>();
             funcs.push(func);

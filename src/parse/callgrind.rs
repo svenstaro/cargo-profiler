@@ -1,4 +1,3 @@
-extern crate ndarray;
 extern crate regex;
 
 use std::process::Command;
@@ -44,12 +43,12 @@ impl CallGrindParser for Profiler {
         // regex identifies lines that start with digits and have characters that commonly
         // show up in file paths
         lazy_static! {
-           static ref callgrind_regex : Regex = Regex::new(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*@*-*|\d+\s*[a-zA-Z]*$*_*\?+:*/*\.*-*@*-*").unwrap();
-           static ref compiler_trash: Regex = Regex::new(r"\$\w{2}\$|\$\w{3}\$").unwrap();
+           static ref CALLGRIND_REGEX : Regex = Regex::new(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*@*-*|\d+\s*[a-zA-Z]*$*_*\?+:*/*\.*-*@*-*").unwrap();
+           static ref COMPILER_TRASH: Regex = Regex::new(r"\$\w{2}\$|\$\w{3}\$").unwrap();
 
        }
 
-        out_split.retain(|x| callgrind_regex.is_match(x));
+        out_split.retain(|x| CALLGRIND_REGEX.is_match(x));
 
 
         let mut funcs: Vec<String> = Vec::new();
@@ -79,7 +78,7 @@ impl CallGrindParser for Profiler {
             let path = elems[1].split(" ").collect::<Vec<_>>();
             let cleaned_path = path[0].split("/").collect::<Vec<_>>();
             let func = cleaned_path[cleaned_path.len() - 1];
-            let mut func = compiler_trash.replace_all(func, "..");
+            let mut func = COMPILER_TRASH.replace_all(func, "..");
             let idx = func.rfind("::").unwrap_or(func.len());
             func.drain(idx..).collect::<String>();
             funcs.push(func)

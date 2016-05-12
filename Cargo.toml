@@ -1,14 +1,19 @@
 [package]
 name = "cargo-profiler"
-version = "0.1.0"
-authors = ["sgururangan-r7 <sgururangan@rapid7.com>"]
+version = "0.1.1"
+authors = ["pegasos1"]
+description = "Cargo subcommand to profile your applications."
+homepage = "http://github.com/pegasos1/cargo-profiler"
+repository = "http://github.com/pegasos1/cargo-profiler"
+license = "Apache-2.0"
+keywords = ["cargo", "profiler", "subcommand", "valgrind", "performance"]
 
 [dependencies]
-clap = "*"
-regex = "*"
-regex_macros = "*"
-ndarray = "*"
-lazy_static = "*"
+clap = "2.5.1"
+regex = "0.1.69"
+ndarray = "0.5.1"
+lazy_static = "0.2.1"
+
 [lib]
 name="profiler"
 lib="src/lib.rs"

@@ -69,8 +69,8 @@ impl fmt::Display for Profiler {
                 );
                 write!(f,
                        " \x1b[1;36mIr  \x1b[1;36mI1mr \x1b[1;36mILmr  \x1b[1;36mDr  \
-                        \x1b[1;36mD1mr \x1b[1;36mLLmr  \x1b[1;36mDw  \x1b[1;36mD1mw \
-                        \x1b[1;36mLL    mw\n");
+                        \x1b[1;36mD1mr \x1b[1;36mDLmr  \x1b[1;36mDw  \x1b[1;36mD1mw \
+                        \x1b[1;36mDLmw\n");
 
                 for (ref x, y) in data.axis_iter(Axis(0)).zip(functs.iter()) {
                     write!(f,

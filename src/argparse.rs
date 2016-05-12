@@ -1,5 +1,4 @@
-extern crate clap;
-use clap::ArgMatches;
+use super::clap::ArgMatches;
 use profiler::Profiler;
 use parse::cachegrind::Metric;
 use err::ProfError;
