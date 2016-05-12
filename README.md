@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/pegasos1/cargo-profiler.svg?branch=master)](https://travis-ci.org/pegasos1/cargo-profiler
+[![Build Status](https://travis-ci.org/pegasos1/cargo-profiler.svg?branch=master)](https://travis-ci.org/pegasos1/cargo-profiler)
 
 
 # cargo-profiler
