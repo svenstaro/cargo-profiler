@@ -48,7 +48,7 @@ impl fmt::Display for Profiler {
                                    ref dlmw,
                                    ref data,
                                    ref functs } => {
-                write!(f,
+                let _ = write!(f,
                        "\n\x1b[32mTotal Memory Accesses\x1b[0m...{}\t\x1b[0m\n\
                        \n\x1b[32mTotal L1 I-Cache Misses\x1b[0m...{} ({}%)\t\x1b[0m\
                        \n\x1b[32mTotal LL I-Cache Misses\x1b[0m...{} ({}%)\t\x1b[0m\
@@ -67,24 +67,25 @@ impl fmt::Display for Profiler {
                        fmt_thousands_sep(dlmr + dlmw, ','),
                        fmt_thousands_sep((dlmr + dlmw) / (ir + dr + dw) * 100., ','),
                 );
-                write!(f,
-                       " \x1b[1;36mIr  \x1b[1;36mI1mr \x1b[1;36mILmr  \x1b[1;36mDr  \
-                        \x1b[1;36mD1mr \x1b[1;36mDLmr  \x1b[1;36mDw  \x1b[1;36mD1mw \
-                        \x1b[1;36mDLmw\n");
+                let _ = write!(f,
+                               " \x1b[1;36mIr  \x1b[1;36mI1mr \x1b[1;36mILmr  \x1b[1;36mDr  \
+                                \x1b[1;36mD1mr \x1b[1;36mDLmr  \x1b[1;36mDw  \x1b[1;36mD1mw \
+                                \x1b[1;36mDLmw\n");
 
                 for (ref x, y) in data.axis_iter(Axis(0)).zip(functs.iter()) {
-                    write!(f,
-                           "\x1b[0m{:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {}\n",
-                           x[0] / ir,
-                           x[1] / i1mr,
-                           x[2] / ilmr,
-                           x[3] / dr,
-                           x[4] / d1mr,
-                           x[5] / dlmr,
-                           x[6] / dw,
-                           x[7] / d1mw,
-                           x[8] / dlmw,
-                           y);
+                    let _ = write!(f,
+                                   "\x1b[0m{:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} \
+                                    {}\n",
+                                   x[0] / ir,
+                                   x[1] / i1mr,
+                                   x[2] / ilmr,
+                                   x[3] / dr,
+                                   x[4] / d1mr,
+                                   x[5] / dlmr,
+                                   x[6] / dw,
+                                   x[7] / d1mw,
+                                   x[8] / dlmw,
+                                   y);
                     println!("{}", DASHES);
                 }
                 Ok(())
@@ -92,9 +93,9 @@ impl fmt::Display for Profiler {
 
             Profiler::CallGrind { ref total_instructions, ref instructions, ref functs } => {
 
-                write!(f,
-                       "\n\x1b[32mTotal Instructions\x1b[0m...{}\n\n\x1b[0m",
-                       fmt_thousands_sep(*total_instructions, ','));
+                let _ = write!(f,
+                               "\n\x1b[32mTotal Instructions\x1b[0m...{}\n\n\x1b[0m",
+                               fmt_thousands_sep(*total_instructions, ','));
 
                 for (&x, ref y) in instructions.iter().zip(functs.iter()) {
                     {
@@ -102,27 +103,27 @@ impl fmt::Display for Profiler {
                         let perc = x / total_instructions * 100.;
                         match perc {
                             t if t >= 50.0 => {
-                                write!(f,
-                                       "{} (\x1b[31m{:.1}%\x1b[0m)\x1b[0m {}\n",
-                                       fmt_thousands_sep(x, ','),
-                                       t,
-                                       y);
+                                let _ = write!(f,
+                                               "{} (\x1b[31m{:.1}%\x1b[0m)\x1b[0m {}\n",
+                                               fmt_thousands_sep(x, ','),
+                                               t,
+                                               y);
                                 println!("{}", DASHES);
                             }
                             t if (t >= 30.0) & (t < 50.0) => {
-                                write!(f,
-                                       "{} (\x1b[33m{:.1}%\x1b[0m)\x1b[0m {}\n",
-                                       fmt_thousands_sep(x, ','),
-                                       t,
-                                       y);
+                                let _ = write!(f,
+                                               "{} (\x1b[33m{:.1}%\x1b[0m)\x1b[0m {}\n",
+                                               fmt_thousands_sep(x, ','),
+                                               t,
+                                               y);
                                 println!("{}", DASHES);
                             }
                             _ => {
-                                write!(f,
-                                       "{} (\x1b[32m{:.1}%\x1b[0m)\x1b[0m {}\n",
-                                       fmt_thousands_sep(x, ','),
-                                       x / total_instructions * 100.,
-                                       y);
+                                let _ = write!(f,
+                                               "{} (\x1b[32m{:.1}%\x1b[0m)\x1b[0m {}\n",
+                                               fmt_thousands_sep(x, ','),
+                                               x / total_instructions * 100.,
+                                               y);
                                 println!("{}", DASHES);
                             }
                         }
