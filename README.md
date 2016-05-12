@@ -76,7 +76,7 @@ Total LL I-Cache Misses...308 (0%)
 Total L1 D-Cache Misses...58,549 (0%)
 Total LL D-Cache Misses...8,451 (0%)
 
- Ir  I1mr ILmr  Dr  D1mr LLmr  Dw  D1mw LLmw
+ Ir  I1mr ILmr  Dr  D1mr DLmr  Dw  D1mw DLmw
 0.40 0.18 0.21 0.35 0.93 1.00 0.38 0.00 0.00 dgemm_kernel.rs:matrixmultiply::gemm::masked_kernel
 -----------------------------------------------------------------------
 0.08 0.04 0.05 0.12 0.00 0.00 0.02 0.00 0.00 loopmacros.rs:matrixmultiply::gemm::masked_kernel
