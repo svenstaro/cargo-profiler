@@ -106,3 +106,6 @@ Total LL D-Cache Misses...8,451 (0%)
 ## TODO
 
 * cmp subcommand - compare binary profiles
+* profiler macros
+* better context around expensive functions
+* support for more profiling tools
