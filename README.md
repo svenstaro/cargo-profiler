@@ -1,10 +1,14 @@
+[travis-image]: https://travis-ci.org/pegasos1/cargo-profiler.svg?branch=master
+[travis-link]: https://travis-ci.org/pegasos1/cargo-profiler
+
+
 # cargo-profiler
 
 Cargo subcommand to profile binaries.
 
 ## To install
 
-NOTE: This subcommand can only be used on Linux machines. 
+NOTE: This subcommand can only be used on Linux machines.
 
 First install valgrind:
 
@@ -101,7 +105,7 @@ Total LL D-Cache Misses...8,451 (0%)
 
 ```
 
-## What are the cachegrind metrics? 
+## What are the cachegrind metrics?
 
 * Ir -> Total Instructions
 * I1mr -> Level 1 I-Cache misses
