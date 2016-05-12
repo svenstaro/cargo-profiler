@@ -18,11 +18,58 @@ use err::ProfError;
 use argparse::{get_profiler, get_binary, get_num, get_sort_metric};
 
 fn main() {
-    real_main();
+    let _ = real_main();
 }
 
-#[cfg(all(unix, target_os = "linux"))]
+// #[cfg(all(unix, any(target_os = "linux", target_os = "macos")))]
+#[cfg(unix)]
 fn real_main() -> Result<(), ProfError> {
+    // create binary path argument
+    let binary_arg = Arg::with_name("binary")
+                         .long("bin")
+                         .value_name("BINARY")
+                         .required(true)
+                         .help("binary you want to profile");
+
+    // create function count argument
+    let fn_count_arg = Arg::with_name("n")
+                           .short("n")
+                           .value_name("NUMBER")
+                           .takes_value(true)
+                           .help("number of functions you want");
+
+    // create sort metric argument
+    let sort_arg = Arg::with_name("sort")
+                       .long("sort")
+                       .value_name("SORT")
+                       .takes_value(true)
+                       .help("metric you want to sort by");
+
+    // create callgrind subcommand
+    let callgrind = SubCommand::with_name("callgrind")
+                        .about("gets callgrind features")
+                        .version("1.0")
+                        .author("Suchin Gururangan")
+                        .arg(binary_arg.clone())
+                        .arg(fn_count_arg.clone());
+
+    // create cachegrind subcommand
+    let cachegrind = SubCommand::with_name("cachegrind")
+                         .about("gets cachegrind features")
+                         .version("1.0")
+                         .author("Suchin Gururangan")
+                         .arg(binary_arg)
+                         .arg(fn_count_arg)
+                         .arg(sort_arg);
+
+    // create profiler subcommand
+    let profiler = SubCommand::with_name("profiler")
+                       .about("gets callgrind features")
+                       .version("1.0")
+                       .author("Suchin Gururangan")
+                       .subcommand(callgrind)
+                       .subcommand(cachegrind);
+
     // create profiler application
     let matches = App::new("cargo-profiler")
                       .bin_name("cargo")
@@ -30,48 +77,7 @@ fn real_main() -> Result<(), ProfError> {
                       .version("1.0")
                       .author("Suchin Gururangan")
                       .about("Profile your binaries")
-                      .subcommand(SubCommand::with_name("profiler")
-                                      .about("gets callgrind features")
-                                      .version("1.0")
-                                      .author("Suchin Gururangan")
-                                      .subcommand(SubCommand::with_name("callgrind")
-                                                      .about("gets callgrind features")
-                                                      .version("1.0")
-                                                      .author("Suchin Gururangan")
-                                                      .arg(Arg::with_name("binary")
-                                                               .long("bin")
-                                                               .value_name("BINARY")
-                                                               .required(true)
-                                                               .help("binary you want to \
-                                                                      profile"))
-                                                      .arg(Arg::with_name("n")
-                                                               .short("n")
-                                                               .value_name("NUMBER")
-                                                               .takes_value(true)
-                                                               .help("number of functions you \
-                                                                      want")))
-                                      .subcommand(SubCommand::with_name("cachegrind")
-                                                      .about("gets cachegrind features")
-                                                      .version("1.0")
-                                                      .author("Suchin Gururangan")
-                                                      .arg(Arg::with_name("binary")
-                                                               .long("bin")
-                                                               .value_name("BINARY")
-                                                               .required(true)
-                                                               .help("binary you want to \
-                                                                      profile"))
-                                                      .arg(Arg::with_name("n")
-                                                               .short("n")
-                                                               .value_name("NUMBER")
-                                                               .takes_value(true)
-                                                               .help("number of functions you \
-                                                                      want"))
-                                                      .arg(Arg::with_name("sort")
-                                                               .long("sort")
-                                                               .value_name("SORT")
-                                                               .takes_value(true)
-                                                               .help("metric you want to sort \
-                                                                      by"))))
+                      .subcommand(profiler)
                       .get_matches();
 
     // parse arguments from cli call
@@ -79,8 +85,6 @@ fn real_main() -> Result<(), ProfError> {
     let binary = try!(get_binary(&m));
     let num = try!(get_num(&m));
     let sort_metric = try!(get_sort_metric(&m));
-
-
 
     // get the name of the binary from the binary argument
     let path = binary.split("/").collect::<Vec<_>>();
