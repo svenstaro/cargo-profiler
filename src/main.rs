@@ -17,7 +17,7 @@ use parse::cachegrind::CacheGrindParser;
 use std::process::Command;
 use err::ProfError;
 use argparse::{get_profiler, get_binary, get_num, get_sort_metric};
-use cargo::{find_toml, get_package_name, build_binary};
+use cargo::{get_package_name, build_binary};
 
 fn main() {
     let _ = real_main();
@@ -92,8 +92,7 @@ fn real_main() -> Result<(), ProfError> {
 
     // parse arguments from cli call
     let (m, profiler) = try!(get_profiler(&matches));
-    let toml_dir = find_toml().unwrap();
-    let package_name = get_package_name(&toml_dir).ok().unwrap();
+    let package_name = get_package_name().ok().unwrap();
     let binary = {
         if m.is_present("binary") {
             try!(get_binary(&m)).to_string()

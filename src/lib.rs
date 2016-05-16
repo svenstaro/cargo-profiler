@@ -4,6 +4,7 @@ extern crate lazy_static;
 extern crate regex;
 extern crate clap;
 extern crate ndarray;
+extern crate rustc_serialize;
 
 pub mod profiler;
 pub mod display;
