@@ -78,7 +78,6 @@ pub fn get_package_name(toml_dir: &PathBuf) -> Result<String, ProfError> {
         caps.push(r)
 
     }
-    println!("{:?}", caps);
     Ok(caps[0].to_string())
 
 }
