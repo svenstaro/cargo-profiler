@@ -4,6 +4,8 @@ use std::path::PathBuf;
 use std::io::prelude::*;
 use err::ProfError;
 use regex::Regex;
+use std::process::exit;
+
 /// Returns the closest ancestor path containing a `Cargo.toml`.
 ///
 /// Returns `None` if no ancestor path contains a `Cargo.toml`, or if
@@ -59,7 +61,6 @@ pub fn find_target() -> Option<PathBuf> {
         None
     })
 }
-
 pub fn get_package_name(toml_dir: &PathBuf) -> Result<String, ProfError> {
     let toml = toml_dir.join("Cargo.toml");
     let mut f = try!(fs::File::open(toml));
@@ -71,9 +72,15 @@ pub fn get_package_name(toml_dir: &PathBuf) -> Result<String, ProfError> {
        static ref PACKAGE_REGEX : Regex = Regex::new(r"\[package\]\n+name\s*=\s*.*").unwrap();
        static ref REPLACE_REGEX : Regex = Regex::new(r"\[package\]\n+name\s*=\s*").unwrap();
    }
-
+    let captures_iter = PACKAGE_REGEX.captures_iter(&s);
+    if captures_iter.collect::<Vec<_>>().len() == 0 {
+        println!("{}", ProfError::TomlError);
+        exit(1);
+    }
     for cap in PACKAGE_REGEX.captures_iter(&s) {
-        let r = REPLACE_REGEX.replace_all(cap.at(0).unwrap_or(""), "");
+
+        let c = cap.at(0).unwrap_or("");
+        let r = REPLACE_REGEX.replace_all(c, "");
         let r = r.replace("\"", "");
         caps.push(r)
 

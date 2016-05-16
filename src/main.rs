@@ -14,30 +14,49 @@ use clap::{Arg, App, SubCommand, AppSettings};
 use profiler::Profiler;
 use parse::callgrind::CallGrindParser;
 use parse::cachegrind::CacheGrindParser;
-use std::process::Command;
+use std::process::{Command, exit};
 use err::ProfError;
+use std::path::Path;
 use argparse::{get_profiler, get_binary, get_num, get_sort_metric};
 use cargo::*;
 fn main() {
     let _ = real_main();
 }
 
-fn build_binary(release: bool, package_name: &str) -> String {
+fn build_binary(release: bool, package_name: &str) -> Result<String, ProfError> {
 
     match release {
         true => {
             println!("\n\x1b[1;33mCompiling \x1b[1;0m{} in release mode...",
                      package_name);
-            let _ = Command::new("cargo").args(&["build", "--release"]).output();
+            let _ = Command::new("cargo")
+                        .args(&["build", "--release"])
+                        .output();
             let target_dir = find_target().unwrap().to_str().unwrap().to_string();
-            target_dir + "/target/release/" + &package_name
+            let path = target_dir + "/target/release/" + &package_name;
+            if !Path::new(&path).exists() {
+                println!("{}", ProfError::CompilationError(package_name.to_string()));
+                exit(1);
+
+            }
+            return Ok(path);
+
         }
         false => {
             println!("\n\x1b[1;33mCompiling \x1b[1;0m{} in debug mode...",
                      package_name);
-            let _ = Command::new("cargo").arg("build").output();
+            let _ = Command::new("cargo")
+                        .arg("build")
+                        .output()
+                        .unwrap_or_else(|e| panic!("failed to execute process: {}", e));;
             let target_dir = find_target().unwrap().to_str().unwrap().to_string();
-            target_dir + "/target/debug/" + &package_name
+            let path = target_dir + "/target/debug/" + &package_name;
+            if !Path::new(&path).exists() {
+                println!("{}", ProfError::CompilationError(package_name.to_string()));
+                exit(1);
+
+            }
+            return Ok(path);
         }
 
     }
@@ -118,9 +137,9 @@ fn real_main() -> Result<(), ProfError> {
             try!(get_binary(&m)).to_string()
         } else {
             if m.is_present("release") {
-                build_binary(true, &package_name[..])
+                try!(build_binary(true, &package_name[..]))
             } else {
-                build_binary(false, &package_name[..])
+                try!(build_binary(false, &package_name[..]))
             }
         }
     };

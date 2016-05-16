@@ -14,6 +14,8 @@ pub enum ProfError {
     /// Wraps a std::io::Error
     IOError(ioError),
     MisalignedData,
+    CompilationError(String),
+    TomlError,
 }
 
 impl fmt::Display for ProfError {
@@ -21,7 +23,9 @@ impl fmt::Display for ProfError {
         match *self {
             ProfError::RegexError => {
                 write!(f,
-                       "\x1b[1;31merror: \x1b[0mregex error -- please file a bug.")
+                       "\x1b[1;31merror: \x1b[0mregex error -- please file a bug. In bug report, \
+                        please include the original output file from profiler, e.g. from \
+                        valgrind --tool=cachegrind --cachegrind-out-file=cachegrind.txt")
             }
             ProfError::InvalidProfiler => {
                 write!(f,
@@ -53,6 +57,17 @@ impl fmt::Display for ProfError {
                        "\x1b[1;31merror: \x1b[0mmisaligned data arrays due to regex error -- \
                         please file a bug.")
             }
+            ProfError::CompilationError(ref err) => {
+                write!(f,
+                       "\x1b[1;31merror: \x1b[0mfailed to compile {}. Run cargo build to get \
+                        compilation error.",
+                       err)
+            }
+            ProfError::TomlError => {
+                write!(f,
+                       "\x1b[1;31merror: \x1b[0merror in parsing Cargo.toml to derive package \
+                        name. Make sure package name is directly under [package] tag.")
+            }
         }
     }
 }
@@ -66,6 +81,10 @@ impl error::Error for ProfError {
             ProfError::InvalidNum => "Invalid number.",
             ProfError::InvalidSortMetric => "Invalid sort metric.",
             ProfError::MisalignedData => "Misaligned Data. File bug.",
+            ProfError::CompilationError(_) => {
+                "Failed to compile. Run cargo build to get compilation error."
+            }
+            ProfError::TomlError => "Error in parsing Cargo.toml.",
             ProfError::IOError(ref err) => err.description(),
 
         }
@@ -79,8 +98,9 @@ impl error::Error for ProfError {
             ProfError::InvalidNum => None,
             ProfError::InvalidSortMetric => None,
             ProfError::MisalignedData => None,
+            ProfError::TomlError => None,
             ProfError::IOError(ref err) => Some(err),
-
+            ProfError::CompilationError(_) => None,
         }
     }
 }
