@@ -14,53 +14,15 @@ use clap::{Arg, App, SubCommand, AppSettings};
 use profiler::Profiler;
 use parse::callgrind::CallGrindParser;
 use parse::cachegrind::CacheGrindParser;
-use std::process::{Command, exit};
+use std::process::Command;
 use err::ProfError;
-use std::path::Path;
 use argparse::{get_profiler, get_binary, get_num, get_sort_metric};
-use cargo::*;
+use cargo::{find_toml, get_package_name, build_binary};
+
 fn main() {
     let _ = real_main();
 }
 
-fn build_binary(release: bool, package_name: &str) -> Result<String, ProfError> {
-
-    match release {
-        true => {
-            println!("\n\x1b[1;33mCompiling \x1b[1;0m{} in release mode...",
-                     package_name);
-            let _ = Command::new("cargo")
-                        .args(&["build", "--release"])
-                        .output();
-            let target_dir = find_target().unwrap().to_str().unwrap().to_string();
-            let path = target_dir + "/target/release/" + &package_name;
-            if !Path::new(&path).exists() {
-                println!("{}", ProfError::CompilationError(package_name.to_string()));
-                exit(1);
-
-            }
-            return Ok(path);
-
-        }
-        false => {
-            println!("\n\x1b[1;33mCompiling \x1b[1;0m{} in debug mode...",
-                     package_name);
-            let _ = Command::new("cargo")
-                        .arg("build")
-                        .output()
-                        .unwrap_or_else(|e| panic!("failed to execute process: {}", e));;
-            let target_dir = find_target().unwrap().to_str().unwrap().to_string();
-            let path = target_dir + "/target/debug/" + &package_name;
-            if !Path::new(&path).exists() {
-                println!("{}", ProfError::CompilationError(package_name.to_string()));
-                exit(1);
-
-            }
-            return Ok(path);
-        }
-
-    }
-}
 // #[cfg(all(unix, any(target_os = "linux", target_os = "macos")))]
 #[cfg(unix)]
 fn real_main() -> Result<(), ProfError> {
@@ -146,10 +108,6 @@ fn real_main() -> Result<(), ProfError> {
 
     let num = try!(get_num(&m));
     let sort_metric = try!(get_sort_metric(&m));
-
-    // get the name of the binary from the binary argument
-    // let path = binary.split("/").collect::<Vec<_>>();
-    // let name = path[path.len() - 1];
 
     match profiler {
         Profiler::CallGrind { .. } => {

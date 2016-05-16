@@ -4,7 +4,8 @@ use std::path::PathBuf;
 use std::io::prelude::*;
 use err::ProfError;
 use regex::Regex;
-use std::process::exit;
+use std::process::{Command, exit};
+use std::path::Path;
 
 /// Returns the closest ancestor path containing a `Cargo.toml`.
 ///
@@ -36,6 +37,10 @@ pub fn find_toml() -> Option<PathBuf> {
     })
 }
 
+/// Returns the closest ancestor path containing a `target` directory.
+///
+/// Returns `None` if no ancestor path contains a `Cargo.toml`, or if
+/// the limit of MAX_ANCESTORS ancestors has been reached.
 pub fn find_target() -> Option<PathBuf> {
     /// Checks if the directory contains `Cargo.toml`
     fn contains_manifest(path: &PathBuf) -> bool {
@@ -61,6 +66,10 @@ pub fn find_target() -> Option<PathBuf> {
         None
     })
 }
+
+
+// returns the name of the package parsed from Cargo.toml
+// this will only work if the package name is directly underneath [package] tag
 pub fn get_package_name(toml_dir: &PathBuf) -> Result<String, ProfError> {
     let toml = toml_dir.join("Cargo.toml");
     let mut f = try!(fs::File::open(toml));
@@ -87,4 +96,45 @@ pub fn get_package_name(toml_dir: &PathBuf) -> Result<String, ProfError> {
     }
     Ok(caps[0].to_string())
 
+}
+
+// build the binary by calling cargo build
+// return the path to the built binary
+pub fn build_binary(release: bool, package_name: &str) -> Result<String, ProfError> {
+
+    match release {
+        true => {
+            println!("\n\x1b[1;33mCompiling \x1b[1;0m{} in release mode...",
+                     package_name);
+            let _ = Command::new("cargo")
+                        .args(&["build", "--release"])
+                        .output();
+            let target_dir = find_target().unwrap().to_str().unwrap().to_string();
+            let path = target_dir + "/target/release/" + &package_name;
+            if !Path::new(&path).exists() {
+                println!("{}", ProfError::CompilationError(package_name.to_string()));
+                exit(1);
+
+            }
+            return Ok(path);
+
+        }
+        false => {
+            println!("\n\x1b[1;33mCompiling \x1b[1;0m{} in debug mode...",
+                     package_name);
+            let _ = Command::new("cargo")
+                        .arg("build")
+                        .output()
+                        .unwrap_or_else(|e| panic!("failed to execute process: {}", e));;
+            let target_dir = find_target().unwrap().to_str().unwrap().to_string();
+            let path = target_dir + "/target/debug/" + &package_name;
+            if !Path::new(&path).exists() {
+                println!("{}", ProfError::CompilationError(package_name.to_string()));
+                exit(1);
+
+            }
+            return Ok(path);
+        }
+
+    }
 }
