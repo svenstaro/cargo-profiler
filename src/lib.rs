@@ -9,6 +9,7 @@ pub mod profiler;
 pub mod display;
 pub mod err;
 pub mod argparse;
+pub mod cargo;
 
 pub mod parse {
     pub mod callgrind;
