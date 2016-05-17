@@ -43,9 +43,17 @@ $ sudo cp ./target/release/cargo-profiler $(dirname $(which cargo))/
 
 Cargo profiler currently supports callgrind and cachegrind.
 
+You can call cargo profiler anywhere in a rust project directory with a `Cargo.toml`.
+
+```
+$ cargo profiler callgrind
+$ cargo profiler cachegrind --release
+```
+
+You can also specify a binary directly:
+
 ```
 $ cargo profiler callgrind --bin $PATH_TO_BINARY
-$ cargo profiler cachegrind --bin $PATH_TO_BINARY
 ```
 
 You can limit the number of functions you'd like to look at:
