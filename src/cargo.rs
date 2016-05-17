@@ -78,13 +78,16 @@ pub fn build_binary(release: bool, package_name: &str) -> Result<String, ProfErr
         true => {
             println!("\n\x1b[1;33mCompiling \x1b[1;0m{} in release mode...",
                      package_name);
-            let _ = Command::new("cargo")
-                        .args(&["build", "--release"])
-                        .output();
+            let out = Command::new("cargo")
+                          .args(&["build", "--release"])
+                          .output()
+                          .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
             let target_dir = find_target().unwrap().to_str().unwrap().to_string();
             let path = target_dir + "/target/release/" + &package_name;
             if !Path::new(&path).exists() {
-                println!("{}", ProfError::CompilationError(package_name.to_string()));
+                println!("{}",
+                         ProfError::CompilationError(package_name.to_string(),
+                                                     String::from_utf8(out.stderr).unwrap()));
                 exit(1);
 
             }
@@ -94,14 +97,16 @@ pub fn build_binary(release: bool, package_name: &str) -> Result<String, ProfErr
         false => {
             println!("\n\x1b[1;33mCompiling \x1b[1;0m{} in debug mode...",
                      package_name);
-            let _ = Command::new("cargo")
-                        .arg("build")
-                        .output()
-                        .unwrap_or_else(|e| panic!("failed to execute process: {}", e));;
+            let out = Command::new("cargo")
+                          .arg("build")
+                          .output()
+                          .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
             let target_dir = find_target().unwrap().to_str().unwrap().to_string();
             let path = target_dir + "/target/debug/" + &package_name;
             if !Path::new(&path).exists() {
-                println!("{}", ProfError::CompilationError(package_name.to_string()));
+                println!("{}",
+                         ProfError::CompilationError(package_name.to_string(),
+                                                     String::from_utf8(out.stderr).unwrap()));
                 exit(1);
 
             }

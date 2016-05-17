@@ -14,7 +14,7 @@ pub enum ProfError {
     /// Wraps a std::io::Error
     IOError(ioError),
     MisalignedData,
-    CompilationError(String),
+    CompilationError(String, String),
     TomlError,
     ReadManifestError,
     NoNameError,
@@ -59,11 +59,11 @@ impl fmt::Display for ProfError {
                        "\x1b[1;31merror: \x1b[0mMisaligned data arrays due to regex error -- \
                         please file a bug.")
             }
-            ProfError::CompilationError(ref err) => {
+            ProfError::CompilationError(ref package_name, ref stderr) => {
                 write!(f,
-                       "\x1b[1;31merror: \x1b[0mFailed to compile {}. Run cargo build to get \
-                        compilation error.",
-                       err)
+                       "\x1b[1;31merror: \x1b[0mFailed to compile {}.\n\n{}",
+                       package_name,
+                       stderr)
             }
             ProfError::TomlError => {
                 write!(f,
@@ -96,7 +96,7 @@ impl error::Error for ProfError {
             ProfError::InvalidNum => "Invalid number.",
             ProfError::InvalidSortMetric => "Invalid sort metric.",
             ProfError::MisalignedData => "Misaligned Data. File bug.",
-            ProfError::CompilationError(_) => {
+            ProfError::CompilationError(_, _) => {
                 "Failed to compile. Run cargo build to get compilation error."
             }
             ProfError::TomlError => "Error in parsing Cargo.toml.",
@@ -117,7 +117,7 @@ impl error::Error for ProfError {
             ProfError::MisalignedData => None,
             ProfError::TomlError => None,
             ProfError::IOError(ref err) => Some(err),
-            ProfError::CompilationError(_) => None,
+            ProfError::CompilationError(_, _) => None,
             ProfError::ReadManifestError => None,
             ProfError::NoNameError => None,
         }
