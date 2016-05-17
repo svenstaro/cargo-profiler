@@ -10,6 +10,10 @@ Cargo subcommand to profile binaries.
 
 * 1.3.0 - cargo better integrated. No longer have to specify binary if in rust project w/ cargo.toml. better error messages and exits (e.g. upon compilation errors).
 
+## Known Issues
+
+* Seems like itertools/ndarray (and thus cargo-profiler) isn't compiling on nightly versions > 05-11-2016. Use a nightly version before this date, or stable.
+
 ## To install
 
 NOTE: This subcommand can only be used on Linux machines.
