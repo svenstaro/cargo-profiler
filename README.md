@@ -8,7 +8,7 @@ Cargo subcommand to profile binaries.
 
 ## Recent changes 
 
-* 1.3.0 - cargo better integrated. No longer have to specify binary if in rust project w/ cargo.toml. better error messages and exits (e.g. upon compilation errors).
+* 0.1.3 - cargo better integrated. No longer have to specify binary if in rust project w/ cargo.toml. better error messages and exits (e.g. upon compilation errors).
 
 ## Known Issues
 
