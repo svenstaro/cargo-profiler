@@ -8,6 +8,7 @@ pub mod parse;
 pub mod display;
 pub mod err;
 pub mod argparse;
+pub mod cargo;
 
 use clap::{Arg, App, SubCommand, AppSettings};
 use profiler::Profiler;
@@ -16,6 +17,7 @@ use parse::cachegrind::CacheGrindParser;
 use std::process::Command;
 use err::ProfError;
 use argparse::{get_profiler, get_binary, get_num, get_sort_metric};
+use cargo::{get_package_name, build_binary};
 
 fn main() {
     let _ = real_main();
@@ -28,8 +30,14 @@ fn real_main() -> Result<(), ProfError> {
     let binary_arg = Arg::with_name("binary")
                          .long("bin")
                          .value_name("BINARY")
-                         .required(true)
+                         .required(false)
                          .help("binary you want to profile");
+    // create release argument
+
+    let release = Arg::with_name("release")
+                      .long("release")
+                      .required(false)
+                      .help("whether binary should be built in release mode");
 
     // create function count argument
     let fn_count_arg = Arg::with_name("n")
@@ -50,6 +58,7 @@ fn real_main() -> Result<(), ProfError> {
                         .about("gets callgrind features")
                         .version("1.0")
                         .author("Suchin Gururangan")
+                        .arg(release.clone())
                         .arg(binary_arg.clone())
                         .arg(fn_count_arg.clone());
 
@@ -58,6 +67,7 @@ fn real_main() -> Result<(), ProfError> {
                          .about("gets cachegrind features")
                          .version("1.0")
                          .author("Suchin Gururangan")
+                         .arg(release)
                          .arg(binary_arg)
                          .arg(fn_count_arg)
                          .arg(sort_arg);
@@ -82,23 +92,30 @@ fn real_main() -> Result<(), ProfError> {
 
     // parse arguments from cli call
     let (m, profiler) = try!(get_profiler(&matches));
-    let binary = try!(get_binary(&m));
+    let package_name = get_package_name().ok().unwrap();
+    let binary = {
+        if m.is_present("binary") {
+            try!(get_binary(&m)).to_string()
+        } else {
+            if m.is_present("release") {
+                try!(build_binary(true, &package_name[..]))
+            } else {
+                try!(build_binary(false, &package_name[..]))
+            }
+        }
+    };
+
     let num = try!(get_num(&m));
     let sort_metric = try!(get_sort_metric(&m));
-
-    // get the name of the binary from the binary argument
-    let path = binary.split("/").collect::<Vec<_>>();
-    let name = path[path.len() - 1];
 
     match profiler {
         Profiler::CallGrind { .. } => {
             println!("\n\x1b[1;33mProfiling \x1b[1;0m{} \x1b[0mwith callgrind\x1b[0m...",
-                     name)
+                     &package_name[..])
         }
         Profiler::CacheGrind { .. } => {
-            println!("\n\x1b[1;33mProfiling \x1b[1;0m{} \x1b[0mwith \
-                      cachegrind\x1b[0m...",
-                     name)
+            println!("\n\x1b[1;33mProfiling \x1b[1;0m{} \x1b[0mwith cachegrind\x1b[0m...",
+                     &package_name[..])
         }
     };
 
