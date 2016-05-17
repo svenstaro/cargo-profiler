@@ -18,6 +18,7 @@ pub enum ProfError {
     TomlError,
     ReadManifestError,
     NoNameError,
+    NoTargetDirectory,
 }
 
 impl fmt::Display for ProfError {
@@ -83,6 +84,13 @@ impl fmt::Display for ProfError {
                         cargo read-manifest to make sure everything looks okay. Otherwise please \
                         submit bug.")
             }
+
+            ProfError::NoTargetDirectory => {
+                write!(f,
+                       "\x1b[1;31merror: \x1b[0mNo target output directory found in project. \
+                        Binary must be in target/debug/ or target/release/, or specify binary \
+                        path explicitly with --bin argument.")
+            }
         }
     }
 }
@@ -102,6 +110,7 @@ impl error::Error for ProfError {
             ProfError::TomlError => "Error in parsing Cargo.toml.",
             ProfError::ReadManifestError => "Error in reading the manifest of this crate.",
             ProfError::NoNameError => "No package name found in Cargo.toml",
+            ProfError::NoTargetDirectory => "No target output directory found in project.",
             ProfError::IOError(ref err) => err.description(),
 
         }
@@ -120,6 +129,7 @@ impl error::Error for ProfError {
             ProfError::CompilationError(_, _) => None,
             ProfError::ReadManifestError => None,
             ProfError::NoNameError => None,
+            ProfError::NoTargetDirectory => None,
         }
     }
 }

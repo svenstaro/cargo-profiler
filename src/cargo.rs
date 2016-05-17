@@ -82,12 +82,21 @@ pub fn build_binary(release: bool, package_name: &str) -> Result<String, ProfErr
                           .args(&["build", "--release"])
                           .output()
                           .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
-            let target_dir = find_target().unwrap().to_str().unwrap().to_string();
+            let target_dir = find_target()
+                                 .unwrap_or_else(|| {
+                                     println!("{}", ProfError::NoTargetDirectory);
+                                     exit(1);
+
+                                 })
+                                 .to_str()
+                                 .expect("target directory could not be converted to string.")
+                                 .to_string();
             let path = target_dir + "/target/release/" + &package_name;
             if !Path::new(&path).exists() {
                 println!("{}",
                          ProfError::CompilationError(package_name.to_string(),
-                                                     String::from_utf8(out.stderr).unwrap()));
+                                                     String::from_utf8(out.stderr)
+                                                         .unwrap_or("".to_string())));
                 exit(1);
 
             }
@@ -101,12 +110,21 @@ pub fn build_binary(release: bool, package_name: &str) -> Result<String, ProfErr
                           .arg("build")
                           .output()
                           .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
-            let target_dir = find_target().unwrap().to_str().unwrap().to_string();
+            let target_dir = find_target()
+                                 .unwrap_or_else(|| {
+                                     println!("{}", ProfError::NoTargetDirectory);
+                                     exit(1);
+
+                                 })
+                                 .to_str()
+                                 .expect("target directory could not be converted to string.")
+                                 .to_string();
             let path = target_dir + "/target/debug/" + &package_name;
             if !Path::new(&path).exists() {
                 println!("{}",
                          ProfError::CompilationError(package_name.to_string(),
-                                                     String::from_utf8(out.stderr).unwrap()));
+                                                     String::from_utf8(out.stderr)
+                                                         .unwrap_or("".to_string())));
                 exit(1);
 
             }
