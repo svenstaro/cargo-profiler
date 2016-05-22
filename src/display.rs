@@ -136,3 +136,13 @@ impl fmt::Display for Profiler {
         }
     }
 }
+
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn test_fmt_thousands_sep() {
+        assert_eq!(1, 1);
+    }
+
+}

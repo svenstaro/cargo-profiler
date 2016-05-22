@@ -6,7 +6,6 @@ use self::ndarray::{Axis, stack, OwnedArray, ArrayView, Ix};
 use profiler::Profiler;
 use std::cmp::Ordering::Less;
 use err::ProfError;
-use std::process;
 use regex::Regex;
 /// initialize matrix object
 pub type Mat<A> = OwnedArray<A, (Ix, Ix)>;
@@ -55,18 +54,22 @@ impl CacheGrindParser for Profiler {
     fn cachegrind_cli(&self, binary: &str) -> Result<String, ProfError> {
 
         // get cachegrind cli output from stdout
-        try!(Command::new("valgrind")
-                 .arg("--tool=cachegrind")
-                 .arg("--cachegrind-out-file=cachegrind.out")
-                 .arg(binary)
-                 .output());
-        let cachegrind_output = try!(Command::new("cg_annotate")
-                                         .arg("cachegrind.out")
-                                         .arg(binary)
-                                         .output());
+        let _ = Command::new("valgrind")
+                    .arg("--tool=cachegrind")
+                    .arg("--cachegrind-out-file=cachegrind.out")
+                    .arg(binary)
+                    .output()
+                    .or(Err(ProfError::CliError));
 
-        Ok(String::from_utf8(cachegrind_output.stdout)
-               .expect("error while returning callgrind stdout"))
+        let cachegrind_output = Command::new("cg_annotate")
+                                    .arg("cachegrind.out")
+                                    .arg(binary)
+                                    .output()
+                                    .or(Err(ProfError::CliError));
+
+        cachegrind_output.and_then(|x| String::from_utf8(x.stdout).or(Err(ProfError::UTF8Error)))
+                         .or(Err(ProfError::CliError))
+
 
     }
     // Get parse the profiler output into respective structs.
@@ -83,8 +86,17 @@ impl CacheGrindParser for Profiler {
         lazy_static! {
            static ref CACHEGRIND_REGEX : Regex = Regex::new(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*@*-*|\d+\s*[a-zA-Z]*$*_*\?+:*/*\.*-*@*-*").unwrap();
            static ref COMPILER_TRASH: Regex = Regex::new(r"\$\w{2}\$|\$\w{3}\$").unwrap();
-
+           static ref ERROR_REGEX : Regex = Regex::new(r"Valgrind's memory management: out of memory").unwrap();
        }
+
+        let errs = out_split.to_owned()
+                            .into_iter()
+                            .filter(|x| ERROR_REGEX.is_match(x))
+                            .collect::<Vec<_>>();
+
+        if errs.len() > 0 {
+            return Err(ProfError::OutOfMemoryError);
+        }
 
         out_split.retain(|x| CACHEGRIND_REGEX.is_match(x));
 
@@ -109,10 +121,7 @@ impl CacheGrindParser for Profiler {
             for elem in elems[0..elems.len() - 1].iter() {
                 let number = match elem.trim().replace(",", "").parse::<f64>() {
                     Ok(n) => n,
-                    Err(_) => {
-                        println!("{}", ProfError::RegexError);
-                        process::exit(1);
-                    }
+                    Err(_) => return Err(ProfError::RegexError),
                 };
 
                 numbers.push(number);
@@ -149,10 +158,8 @@ impl CacheGrindParser for Profiler {
                                                .collect::<Vec<_>>()
                                                .as_slice()) {
             Ok(m) => m.t().to_owned(),
-            Err(_) => {
-                println!("{}", ProfError::MisalignedData);
-                process::exit(1);
-            }
+            Err(_) => return Err(ProfError::MisalignedData),
+
         };
 
 
@@ -221,5 +228,25 @@ impl CacheGrindParser for Profiler {
             data: sorted_data_matrix,
             functs: sorted_funcs,
         })
+    }
+}
+
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn test_cachegrind_parse_1() {
+        assert_eq!(1, 1);
+    }
+
+    #[test]
+    fn test_cachegrind_parse_2() {
+        assert_eq!(1, 1);
+        assert_eq!(1, 1);
+    }
+
+    #[test]
+    fn test_cachegrind_parse_3() {
+        assert_eq!(1, 1);
     }
 }

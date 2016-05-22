@@ -5,6 +5,7 @@ use std::f64;
 // initialize matrix object
 pub type Mat<A> = OwnedArray<A, (Ix, Ix)>;
 
+#[derive(Debug)]
 // Profiler enum. We have two profilers: CacheGrind and CallGrind.
 pub enum Profiler {
     // CachGrind holds the parsed objects of

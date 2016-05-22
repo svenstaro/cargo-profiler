@@ -17,11 +17,19 @@ use parse::cachegrind::CacheGrindParser;
 use std::process::Command;
 use err::ProfError;
 use argparse::{get_profiler, get_binary, get_num, get_sort_metric};
-use cargo::{get_package_name, build_binary};
+use cargo::build_binary;
+use std::process;
+
+// macro to try something, but print custom error message and exit upon error.
+macro_rules! try_or_exit {
+    ($e:expr) => (match $e { Ok(e) => e, Err(e) =>   {println!("{}",e); process::exit(1);} })
+}
 
 fn main() {
     let _ = real_main();
 }
+
+
 
 // #[cfg(all(unix, any(target_os = "linux", target_os = "macos")))]
 #[cfg(unix)]
@@ -91,31 +99,32 @@ fn real_main() -> Result<(), ProfError> {
                       .get_matches();
 
     // parse arguments from cli call
-    let (m, profiler) = try!(get_profiler(&matches));
-    let package_name = get_package_name().ok().unwrap();
+    let (m, profiler) = try_or_exit!(get_profiler(&matches));
     let binary = {
         if m.is_present("binary") {
-            try!(get_binary(&m)).to_string()
+            try_or_exit!(get_binary(&m)).to_string()
         } else {
             if m.is_present("release") {
-                try!(build_binary(true, &package_name[..]))
+                try_or_exit!(build_binary(true))
             } else {
-                try!(build_binary(false, &package_name[..]))
+                try_or_exit!(build_binary(false))
             }
         }
     };
 
-    let num = try!(get_num(&m));
-    let sort_metric = try!(get_sort_metric(&m));
+    let binary_name = binary.split("/").collect::<Vec<&str>>().pop().unwrap_or("");
+
+    let num = try_or_exit!(get_num(&m));
+    let sort_metric = try_or_exit!(get_sort_metric(&m));
 
     match profiler {
         Profiler::CallGrind { .. } => {
             println!("\n\x1b[1;33mProfiling \x1b[1;0m{} \x1b[0mwith callgrind\x1b[0m...",
-                     &package_name[..])
+                     binary_name)
         }
         Profiler::CacheGrind { .. } => {
             println!("\n\x1b[1;33mProfiling \x1b[1;0m{} \x1b[0mwith cachegrind\x1b[0m...",
-                     &package_name[..])
+                     binary_name)
         }
     };
 
@@ -124,11 +133,17 @@ fn real_main() -> Result<(), ProfError> {
         Profiler::CallGrind { .. } => try!(profiler.callgrind_cli(&binary)),
         Profiler::CacheGrind { .. } => try!(profiler.cachegrind_cli(&binary)),
     };
+
     // parse the output into struct
     let parsed = match profiler {
-        Profiler::CallGrind { .. } => try!(profiler.callgrind_parse(&output, num)),
-        Profiler::CacheGrind { .. } => try!(profiler.cachegrind_parse(&output, num, sort_metric)),
+        Profiler::CallGrind { .. } => try_or_exit!(profiler.callgrind_parse(&output, num)),
+        Profiler::CacheGrind { .. } => {
+            try_or_exit!(profiler.cachegrind_parse(&output, num, sort_metric))
+        }
     };
+
+
+
 
     // pretty-print
     println!("{}", parsed);

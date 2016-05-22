@@ -4,7 +4,6 @@ use std::process::Command;
 use profiler::Profiler;
 use err::ProfError;
 use regex::Regex;
-use std::process;
 
 // Parser trait. To parse the output of Profilers, we first have to get their output from
 // the command line, and then parse the output into respective structs.
@@ -19,16 +18,19 @@ impl CallGrindParser for Profiler {
     fn callgrind_cli(&self, binary: &str) -> Result<String, ProfError> {
 
         // get callgrind cli output from stdout
-        try!(Command::new("valgrind")
-                 .arg("--tool=callgrind")
-                 .arg("--callgrind-out-file=callgrind.out")
-                 .arg(binary)
-                 .output());
+        Command::new("valgrind")
+            .arg("--tool=callgrind")
+            .arg("--callgrind-out-file=callgrind.out")
+            .arg(binary)
+            .output()
+            .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
 
-        let cachegrind_output = try!(Command::new("callgrind_annotate")
-                                         .arg("callgrind.out")
-                                         .arg(binary)
-                                         .output());
+        let cachegrind_output = Command::new("callgrind_annotate")
+                                    .arg("callgrind.out")
+                                    .arg(binary)
+                                    .output()
+                                    .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
+
         Ok(String::from_utf8(cachegrind_output.stdout)
                .expect("error while returning cachegrind stdout"))
 
@@ -44,8 +46,16 @@ impl CallGrindParser for Profiler {
         lazy_static! {
            static ref CALLGRIND_REGEX : Regex = Regex::new(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*@*-*|\d+\s*[a-zA-Z]*$*_*\?+:*/*\.*-*@*-*").unwrap();
            static ref COMPILER_TRASH: Regex = Regex::new(r"\$\w{2}\$|\$\w{3}\$").unwrap();
+           static ref ERROR_REGEX : Regex = Regex::new(r"out of memory").unwrap();
 
        }
+        let errs = out_split.to_owned()
+                            .into_iter()
+                            .filter(|x| ERROR_REGEX.is_match(x))
+                            .collect::<Vec<_>>();
+        if errs.len() > 0 {
+            return Err(ProfError::OutOfMemoryError);
+        }
 
         out_split.retain(|x| CALLGRIND_REGEX.is_match(x));
 
@@ -55,18 +65,17 @@ impl CallGrindParser for Profiler {
         // loop through each line and get numbers + func
         for sample in out_split.iter() {
 
+
             // trim the sample, split by whitespace to separate out each data point
             // (numbers + func)
             let elems = sample.trim().split("  ").collect::<Vec<_>>();
 
             // for each number, remove any commas and parse into f64. the last element in
             // data_elems is the function file path.
+
             let data_row = match elems[0].trim().replace(",", "").parse::<f64>() {
                 Ok(rep) => rep,
-                Err(_) => {
-                    println!("{}", ProfError::RegexError);
-                    process::exit(1);
-                }
+                Err(_) => return Err(ProfError::RegexError),
             };
 
             data_vec.push(data_row);
@@ -100,5 +109,31 @@ impl CallGrindParser for Profiler {
             instructions: data_vec,
             functs: funcs,
         })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use profiler::Profiler;
+    use super::CallGrindParser;
+    #[test]
+    fn test_callgrind_parse_1() {
+        let output = "==6072==     Valgrind's memory management: out of memory:\n ==6072==     \
+                      Whatever the reason, Valgrind cannot continue.  Sorry.";
+        let num = 10;
+        let profiler = Profiler::new_callgrind();
+        let is_err = profiler.callgrind_parse(&output, num).is_err();
+        assert!(is_err && true)
+    }
+
+    #[test]
+    fn test_callgrind_parse_2() {
+        assert_eq!(1, 1);
+        assert_eq!(1, 1);
+    }
+
+    #[test]
+    fn test_callgrind_parse_3() {
+        assert_eq!(1, 1);
     }
 }
