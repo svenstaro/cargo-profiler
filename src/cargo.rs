@@ -4,7 +4,7 @@ use std::env;
 use std::fs;
 use std::path::PathBuf;
 use err::ProfError;
-use std::process::{Command, exit};
+use std::process::Command;
 use std::path::Path;
 use self::rustc_serialize::json::Json;
 
@@ -43,28 +43,23 @@ pub fn find_target() -> Option<PathBuf> {
 // this will only work if the package name is directly underneath [package] tag
 pub fn get_package_name() -> Result<String, ProfError> {
 
-    let manifest = match Command::new("cargo").arg("read-manifest").output() {
-        Ok(m) => m,
-        Err(_) => {
-            println!("{}", ProfError::ReadManifestError);
-            exit(1);
-        }
-    };
+    let manifest = Command::new("cargo")
+                       .arg("read-manifest")
+                       .output()
+                       .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
 
 
-    let data = Json::from_str(&String::from_utf8(manifest.stdout)
-                                   .expect("Error while returning manifest JSON stdout"))
-                   .expect("Error in encoding manifest string into JSON");
+    let out = String::from_utf8(manifest.stdout).unwrap_or("".to_string());
+    let data = Json::from_str(&out).or(Err(ProfError::ReadManifestError));
 
 
-    match data.as_object().expect("Could not extract Object from JSON").get("name") {
-
-        Some(n) => Ok(n.to_string().replace("\"", "")),
-        None => {
-            println!("{}", ProfError::NoNameError);
-            exit(1);
-        }
-    }
+    data.and_then(|x| {
+        x.as_object()
+         .expect("Could not extract object from read manifest JSON. Please submit bug.")
+         .get("name")
+         .ok_or(ProfError::NoNameError)
+         .and_then(|x| Ok(x.to_string().replace("\"", "")))
+    })
 
 
 
@@ -72,34 +67,33 @@ pub fn get_package_name() -> Result<String, ProfError> {
 
 // build the binary by calling cargo build
 // return the path to the built binary
-pub fn build_binary(release: bool, package_name: &str) -> Result<String, ProfError> {
+pub fn build_binary(release: bool) -> Result<String, ProfError> {
+    let package_name = try!(get_package_name());
 
     match release {
         true => {
             println!("\n\x1b[1;33mCompiling \x1b[1;0m{} in release mode...",
                      package_name);
             let out = Command::new("cargo")
-                          .args(&["build", "--release"])
+                          .arg("build --release")
                           .output()
                           .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
             let target_dir = find_target()
-                                 .unwrap_or_else(|| {
-                                     println!("{}", ProfError::NoTargetDirectory);
-                                     exit(1);
-
-                                 })
-                                 .to_str()
-                                 .expect("target directory could not be converted to string.")
-                                 .to_string();
-            let path = target_dir + "/target/release/" + &package_name;
+                                 .ok_or(ProfError::NoTargetDirectory)
+                                 .and_then(|x| {
+                                     Ok(x.to_str()
+                                         .expect("target directory could not be converted to \
+                                                  string.")
+                                         .to_string())
+                                 });
+            let path = target_dir.and_then(|x| Ok(x + "/target/release/" + &package_name))
+                                 .unwrap_or("".to_string());
             if !Path::new(&path).exists() {
-                println!("{}",
-                         ProfError::CompilationError(package_name.to_string(),
-                                                     String::from_utf8(out.stderr)
-                                                         .unwrap_or("".to_string())));
-                exit(1);
-
+                return Err(ProfError::CompilationError(package_name.to_string(),
+                                                       String::from_utf8(out.stderr)
+                                                           .unwrap_or("".to_string())));
             }
+
             return Ok(path);
 
         }
@@ -111,25 +105,42 @@ pub fn build_binary(release: bool, package_name: &str) -> Result<String, ProfErr
                           .output()
                           .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
             let target_dir = find_target()
-                                 .unwrap_or_else(|| {
-                                     println!("{}", ProfError::NoTargetDirectory);
-                                     exit(1);
-
-                                 })
-                                 .to_str()
-                                 .expect("target directory could not be converted to string.")
-                                 .to_string();
-            let path = target_dir + "/target/debug/" + &package_name;
+                                 .ok_or(ProfError::NoTargetDirectory)
+                                 .and_then(|x| {
+                                     Ok(x.to_str()
+                                         .expect("target directory could not be converted to \
+                                                  string.")
+                                         .to_string())
+                                 });
+            let path = target_dir.and_then(|x| Ok(x + "/target/debug/" + &package_name))
+                                 .unwrap_or("".to_string());
             if !Path::new(&path).exists() {
-                println!("{}",
-                         ProfError::CompilationError(package_name.to_string(),
-                                                     String::from_utf8(out.stderr)
-                                                         .unwrap_or("".to_string())));
-                exit(1);
-
+                return Err(ProfError::CompilationError(package_name.to_string(),
+                                                       String::from_utf8(out.stderr)
+                                                           .unwrap_or("".to_string())));
             }
+
             return Ok(path);
+
+        }
+    }
+
+#[cfg(test)]
+    mod test {
+        #[test]
+        fn test_find_target() {
+            assert_eq!(1, 1);
         }
 
+        #[test]
+        fn test_get_package_name() {
+            assert_eq!(1, 1);
+            assert_eq!(1, 1);
+        }
+
+        #[test]
+        fn test_build_binary() {
+            assert_eq!(1, 1);
+        }
     }
 }

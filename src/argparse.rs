@@ -3,7 +3,6 @@ use profiler::Profiler;
 use parse::cachegrind::Metric;
 use err::ProfError;
 use std::path::Path;
-use std::process;
 
 /// match the profiler argument
 pub fn get_profiler<'a>(matches: &'a ArgMatches)
@@ -15,18 +14,12 @@ pub fn get_profiler<'a>(matches: &'a ArgMatches)
                 None => {
                     match matches.subcommand_matches("cachegrind") {
                         Some(matches) => Ok((matches, Profiler::new_cachegrind())),
-                        None => {
-                            println!("{}", ProfError::InvalidProfiler);
-                            process::exit(1);
-                        }
+                        None => Err(ProfError::InvalidProfiler),
                     }
                 }
             }
         }
-        None => {
-            println!("{}", ProfError::InvalidProfiler);
-            process::exit(1);
-        }
+        None => Err(ProfError::InvalidProfiler),
     }
 }
 
@@ -36,16 +29,11 @@ pub fn get_binary<'a>(matches: &'a ArgMatches) -> Result<&'a str, ProfError> {
     match matches.value_of("binary") {
         Some(z) => {
             if !Path::new(z).exists() {
-                println!("{}", ProfError::InvalidBinary);
-                process::exit(1);
-
+                return Err(ProfError::InvalidBinary);
             }
             return Ok(z);
         }
-        None => {
-            println!("{}", ProfError::InvalidBinary);
-            process::exit(1);
-        }
+        None => Err(ProfError::InvalidBinary),
     }
 
 
@@ -56,10 +44,7 @@ pub fn get_num(matches: &ArgMatches) -> Result<usize, ProfError> {
 
     match matches.value_of("n").map(|x| x.parse::<usize>()) {
         Some(Ok(z)) => Ok(z),
-        Some(Err(_)) => {
-            println!("{}", ProfError::InvalidNum);
-            process::exit(1);
-        }
+        Some(Err(_)) => Err(ProfError::InvalidNum),
         None => Ok(10000), // some arbitrarily large number...
     }
 
@@ -78,10 +63,30 @@ pub fn get_sort_metric(matches: &ArgMatches) -> Result<Metric, ProfError> {
         Some("d1mw") => Ok(Metric::D1mw),
         Some("dlmw") => Ok(Metric::DLmw),
         None => Ok(Metric::NAN),
-        _ => {
-            println!("{}", ProfError::InvalidSortMetric);
-            process::exit(1);
-        }
+        _ => Err(ProfError::InvalidSortMetric),
+    }
+}
 
+#[cfg(test)]
+mod test {
+    #[test]
+    fn test_get_profiler() {
+        assert_eq!(1, 1);
+    }
+
+    #[test]
+    fn test_get_binary() {
+        assert_eq!(1, 1);
+        assert_eq!(1, 1);
+    }
+
+    #[test]
+    fn test_get_num() {
+        assert_eq!(1, 1);
+    }
+
+    #[test]
+    fn test_get_sort_metric() {
+        assert_eq!(1, 1);
     }
 }

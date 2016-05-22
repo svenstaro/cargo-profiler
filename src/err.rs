@@ -2,7 +2,6 @@ use std::error;
 use std::fmt;
 use std::io::Error as ioError;
 
-
 #[derive(Debug)]
 /// Represents potential errors that may occur when profiling
 pub enum ProfError {
@@ -13,12 +12,15 @@ pub enum ProfError {
     InvalidSortMetric,
     /// Wraps a std::io::Error
     IOError(ioError),
+    UTF8Error,
     MisalignedData,
     CompilationError(String, String),
     TomlError,
     ReadManifestError,
     NoNameError,
     NoTargetDirectory,
+    OutOfMemoryError,
+    CliError,
 }
 
 impl fmt::Display for ProfError {
@@ -55,6 +57,10 @@ impl fmt::Display for ProfError {
                        "\x1b[1;31merror: \x1b[0mIO error: {} -- please file a bug.",
                        err)
             }
+            ProfError::UTF8Error => {
+                write!(f,
+                       "\x1b[1;31merror: \x1b[0mCLI Utf8 error -- please file a bug.")
+            }
             ProfError::MisalignedData => {
                 write!(f,
                        "\x1b[1;31merror: \x1b[0mMisaligned data arrays due to regex error -- \
@@ -73,9 +79,8 @@ impl fmt::Display for ProfError {
             }
             ProfError::ReadManifestError => {
                 write!(f,
-                       "\x1b[1;31merror: \x1b[0mError in reading the manifest of this crate. Run \
-                        cargo read-manifest to make sure everything looks okay. Otherwise please \
-                        submit bug.")
+                       "\x1b[1;31merror: \x1b[0mCargo.toml missing. Are you sure you're in a Rust \
+                        project?")
             }
 
             ProfError::NoNameError => {
@@ -90,6 +95,16 @@ impl fmt::Display for ProfError {
                        "\x1b[1;31merror: \x1b[0mNo target output directory found in project. \
                         Binary must be in target/debug/ or target/release/, or specify binary \
                         path explicitly with --bin argument.")
+            }
+            ProfError::OutOfMemoryError => {
+                write!(f,
+                       "\x1b[1;31merror: \x1b[0mValgrind's memory management: out of memory. \
+                        Valgrind cannot continue. Sorry. ")
+            }
+            ProfError::CliError => {
+                write!(f,
+                       "\x1b[1;31merror: \x1b[0mError in valgrind cli call. Make sure valgrind is \
+                        installed properly.")
             }
         }
     }
@@ -112,7 +127,9 @@ impl error::Error for ProfError {
             ProfError::NoNameError => "No package name found in Cargo.toml",
             ProfError::NoTargetDirectory => "No target output directory found in project.",
             ProfError::IOError(ref err) => err.description(),
-
+            ProfError::OutOfMemoryError => "out of memory.",
+            ProfError::CliError => "make sure valgrind is installed properly.",
+            ProfError::UTF8Error => "utf8 error. file bug.",
         }
     }
 
@@ -130,6 +147,9 @@ impl error::Error for ProfError {
             ProfError::ReadManifestError => None,
             ProfError::NoNameError => None,
             ProfError::NoTargetDirectory => None,
+            ProfError::OutOfMemoryError => None,
+            ProfError::CliError => None,
+            ProfError::UTF8Error => None,
         }
     }
 }
