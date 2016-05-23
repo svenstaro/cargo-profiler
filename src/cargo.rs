@@ -70,77 +70,57 @@ pub fn get_package_name() -> Result<String, ProfError> {
 pub fn build_binary(release: bool) -> Result<String, ProfError> {
     let package_name = try!(get_package_name());
 
-    match release {
+    let (build_arg, binary_dir) = match release {
         true => {
             println!("\n\x1b[1;33mCompiling \x1b[1;0m{} in release mode...",
                      package_name);
-            let out = Command::new("cargo")
-                          .arg("build --release")
-                          .output()
-                          .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
-            let target_dir = find_target()
-                                 .ok_or(ProfError::NoTargetDirectory)
-                                 .and_then(|x| {
-                                     Ok(x.to_str()
-                                         .expect("target directory could not be converted to \
-                                                  string.")
-                                         .to_string())
-                                 });
-            let path = target_dir.and_then(|x| Ok(x + "/target/release/" + &package_name))
-                                 .unwrap_or("".to_string());
-            if !Path::new(&path).exists() {
-                return Err(ProfError::CompilationError(package_name.to_string(),
-                                                       String::from_utf8(out.stderr)
-                                                           .unwrap_or("".to_string())));
-            }
-
-            return Ok(path);
-
+            ("build --release", "/target/release")
         }
         false => {
             println!("\n\x1b[1;33mCompiling \x1b[1;0m{} in debug mode...",
                      package_name);
-            let out = Command::new("cargo")
-                          .arg("build")
-                          .output()
-                          .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
-            let target_dir = find_target()
-                                 .ok_or(ProfError::NoTargetDirectory)
-                                 .and_then(|x| {
-                                     Ok(x.to_str()
-                                         .expect("target directory could not be converted to \
-                                                  string.")
-                                         .to_string())
-                                 });
-            let path = target_dir.and_then(|x| Ok(x + "/target/debug/" + &package_name))
-                                 .unwrap_or("".to_string());
-            if !Path::new(&path).exists() {
-                return Err(ProfError::CompilationError(package_name.to_string(),
-                                                       String::from_utf8(out.stderr)
-                                                           .unwrap_or("".to_string())));
-            }
-
-            return Ok(path);
-
+            ("build", "target/debug")
         }
+    };
+    let out = Command::new("cargo")
+                  .arg(build_arg)
+                  .output()
+                  .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
+
+    let target_dir = find_target()
+                         .ok_or(ProfError::NoTargetDirectory)
+                         .and_then(|x| {
+                             Ok(x.to_str()
+                                 .expect("target directory could not be converted to string.")
+                                 .to_string())
+                         });
+    let path = target_dir.and_then(|x| Ok(x + binary_dir + &package_name))
+                         .unwrap_or("".to_string());
+
+
+    if !Path::new(&path).exists() {
+        return Err(ProfError::CompilationError(package_name.to_string(),
+                                               String::from_utf8(out.stderr)
+                                                   .unwrap_or("".to_string())));
     }
+    Ok(path)
+}
 
 #[cfg(test)]
-    mod test {
-        #[test]
-        fn test_find_target() {
-            assert_eq!(1, 1);
-        }
+mod test {
+    #[test]
+    fn test_find_target() {
+        assert_eq!(1, 1);
+    }
 
-        #[test]
-        fn test_get_package_name() {
-            assert_eq!(1, 1);
-            assert_eq!(1, 1);
-        }
+    #[test]
+    fn test_get_package_name() {
+        assert_eq!(1, 1);
+        assert_eq!(1, 1);
+    }
 
-        #[test]
-        fn test_build_binary() {
-            assert_eq!(1, 1);
-        }
+    #[test]
+    fn test_build_binary() {
+        assert_eq!(1, 1);
     }
 }
