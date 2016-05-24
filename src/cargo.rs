@@ -70,22 +70,29 @@ pub fn get_package_name() -> Result<String, ProfError> {
 pub fn build_binary(release: bool) -> Result<String, ProfError> {
     let package_name = try!(get_package_name());
 
-    let (build_arg, binary_dir) = match release {
+    let (out, binary_dir) = match release {
         true => {
             println!("\n\x1b[1;33mCompiling \x1b[1;0m{} in release mode...",
                      package_name);
-            ("build --release", "/target/release")
+
+            (Command::new("cargo")
+                 .args(&["build", "--release"])
+                 .output()
+                 .unwrap_or_else(|e| panic!("failed to execute process: {}", e)),
+             "/target/release/")
         }
         false => {
             println!("\n\x1b[1;33mCompiling \x1b[1;0m{} in debug mode...",
                      package_name);
-            ("build", "target/debug")
+
+            (Command::new("cargo")
+                 .arg("build")
+                 .output()
+                 .unwrap_or_else(|e| panic!("failed to execute process: {}", e)),
+             "/target/debug/")
         }
     };
-    let out = Command::new("cargo")
-                  .arg(build_arg)
-                  .output()
-                  .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
+
 
     let target_dir = find_target()
                          .ok_or(ProfError::NoTargetDirectory)
@@ -96,7 +103,6 @@ pub fn build_binary(release: bool) -> Result<String, ProfError> {
                          });
     let path = target_dir.and_then(|x| Ok(x + binary_dir + &package_name))
                          .unwrap_or("".to_string());
-
 
     if !Path::new(&path).exists() {
         return Err(ProfError::CompilationError(package_name.to_string(),
