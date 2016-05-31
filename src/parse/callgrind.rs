@@ -4,24 +4,26 @@ use std::process::Command;
 use profiler::Profiler;
 use err::ProfError;
 use regex::Regex;
+use std::ffi::OsStr;
 
 // Parser trait. To parse the output of Profilers, we first have to get their output from
 // the command line, and then parse the output into respective structs.
 pub trait CallGrindParser {
-    fn callgrind_cli(&self, binary: &str) -> Result<String, ProfError>;
+    fn callgrind_cli(&self, binary: &str, binargs: &[&OsStr]) -> Result<String, ProfError>;
     fn callgrind_parse<'b>(&'b self, output: &'b str, num: usize) -> Result<Profiler, ProfError>;
 }
 
 
 impl CallGrindParser for Profiler {
     // Get profiler output from stdout.
-    fn callgrind_cli(&self, binary: &str) -> Result<String, ProfError> {
+    fn callgrind_cli(&self, binary: &str, binargs: &[&OsStr]) -> Result<String, ProfError> {
 
         // get callgrind cli output from stdout
         Command::new("valgrind")
             .arg("--tool=callgrind")
             .arg("--callgrind-out-file=callgrind.out")
             .arg(binary)
+            .args(binargs)
             .output()
             .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
 

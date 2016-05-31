@@ -19,6 +19,7 @@ use err::ProfError;
 use argparse::{get_profiler, get_binary, get_num, get_sort_metric};
 use cargo::build_binary;
 use std::process;
+use std::ffi::OsStr;
 
 // macro to try something, but print custom error message and exit upon error.
 macro_rules! try_or_exit {
@@ -40,8 +41,15 @@ fn real_main() -> Result<(), ProfError> {
                          .value_name("BINARY")
                          .required(false)
                          .help("binary you want to profile");
-    // create release argument
 
+    // create binary arguments positional args (aka, everything after a '--')
+    let binargs_arg = Arg::with_name("binargs")
+                          .multiple(true)
+                          .value_name("BIN_ARGS")
+                          .required(false)
+                          .help("arguments to the binary when executed");
+
+    // create release argument
     let release = Arg::with_name("release")
                       .long("release")
                       .required(false)
@@ -68,6 +76,7 @@ fn real_main() -> Result<(), ProfError> {
                         .author("Suchin Gururangan")
                         .arg(release.clone())
                         .arg(binary_arg.clone())
+                        .arg(binargs_arg.clone())
                         .arg(fn_count_arg.clone());
 
     // create cachegrind subcommand
@@ -77,6 +86,7 @@ fn real_main() -> Result<(), ProfError> {
                          .author("Suchin Gururangan")
                          .arg(release)
                          .arg(binary_arg)
+                         .arg(binargs_arg.clone())
                          .arg(fn_count_arg)
                          .arg(sort_arg);
 
@@ -113,6 +123,10 @@ fn real_main() -> Result<(), ProfError> {
     };
 
     let binary_name = binary.split("/").collect::<Vec<&str>>().pop().unwrap_or("");
+    let binargs: Vec<&OsStr> = match matches.values_of_os("binargs") {
+        None => vec!(),
+        Some(raw) => raw.collect(),
+    };
 
     let num = try_or_exit!(get_num(&m));
     let sort_metric = try_or_exit!(get_sort_metric(&m));
@@ -130,8 +144,8 @@ fn real_main() -> Result<(), ProfError> {
 
     // get the profiler output
     let output = match profiler {
-        Profiler::CallGrind { .. } => try!(profiler.callgrind_cli(&binary)),
-        Profiler::CacheGrind { .. } => try!(profiler.cachegrind_cli(&binary)),
+        Profiler::CallGrind { .. } => try!(profiler.callgrind_cli(&binary, &binargs)),
+        Profiler::CacheGrind { .. } => try!(profiler.cachegrind_cli(&binary, &binargs)),
     };
 
     // parse the output into struct

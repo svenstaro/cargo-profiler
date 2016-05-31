@@ -7,6 +7,8 @@ use profiler::Profiler;
 use std::cmp::Ordering::Less;
 use err::ProfError;
 use regex::Regex;
+use std::ffi::OsStr;
+
 /// initialize matrix object
 pub type Mat<A> = OwnedArray<A, (Ix, Ix)>;
 
@@ -37,7 +39,7 @@ pub fn sort_matrix(mat: &Mat<f64>, sort_col: ArrayView<f64, Ix>) -> (Mat<f64>, V
 /// Parser trait. To parse the output of Profilers, we first have to get their output from
 /// the command line, and then parse the output into respective structs.
 pub trait CacheGrindParser {
-    fn cachegrind_cli(&self, binary: &str) -> Result<String, ProfError>;
+    fn cachegrind_cli(&self, binary: &str, binargs: &[&OsStr]) -> Result<String, ProfError>;
     fn cachegrind_parse<'b>(&'b self,
                             output: &'b str,
                             num: usize,
@@ -51,13 +53,14 @@ pub trait CacheGrindParser {
 
 impl CacheGrindParser for Profiler {
     /// Get profiler output from stdout.
-    fn cachegrind_cli(&self, binary: &str) -> Result<String, ProfError> {
+    fn cachegrind_cli(&self, binary: &str, binargs: &[&OsStr]) -> Result<String, ProfError> {
 
         // get cachegrind cli output from stdout
         let _ = Command::new("valgrind")
                     .arg("--tool=cachegrind")
                     .arg("--cachegrind-out-file=cachegrind.out")
                     .arg(binary)
+                    .args(binargs)
                     .output()
                     .or(Err(ProfError::CliError));
 

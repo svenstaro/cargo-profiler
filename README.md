@@ -57,6 +57,13 @@ You can also specify a binary directly:
 $ cargo profiler callgrind --bin $PATH_TO_BINARY
 ```
 
+To specify command line arguments to the executable being profiled, append them
+after a `--`:
+
+```
+$ cargo profiler callgrind --bin $PATH_TO_BINARY -- -a 3 --like this
+```
+
 You can limit the number of functions you'd like to look at:
 
 ```
