@@ -123,7 +123,7 @@ fn real_main() -> Result<(), ProfError> {
     };
 
     let binary_name = binary.split("/").collect::<Vec<&str>>().pop().unwrap_or("");
-    let binargs: Vec<&OsStr> = match matches.values_of_os("binargs") {
+    let binargs: Vec<&OsStr> = match m.values_of_os("binargs") {
         None => vec!(),
         Some(raw) => raw.collect(),
     };
