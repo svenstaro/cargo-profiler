@@ -46,7 +46,9 @@ impl CallGrindParser for Profiler {
         // regex identifies lines that start with digits and have characters that commonly
         // show up in file paths
         lazy_static! {
-           static ref CALLGRIND_REGEX : Regex = Regex::new(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*@*-*|\d+\s*[a-zA-Z]*$*_*\?+:*/*\.*-*@*-*").unwrap();
+           static ref CALLGRIND_REGEX : Regex = Regex::new(concat!(
+                   r"(?:^\s*\d+\s*[a-zA-Z]*$*_*:*/+\.*@*-*)|",
+                   r"(?:^\s*\d+\s*[a-zA-Z]*$*_*\?+:*/*\.*-*@*-*)")).unwrap();
            static ref COMPILER_TRASH: Regex = Regex::new(r"\$\w{2}\$|\$\w{3}\$").unwrap();
            static ref ERROR_REGEX : Regex = Regex::new(r"out of memory").unwrap();
 
@@ -77,7 +79,10 @@ impl CallGrindParser for Profiler {
 
             let data_row = match elems[0].trim().replace(",", "").parse::<f64>() {
                 Ok(rep) => rep,
-                Err(_) => return Err(ProfError::RegexError),
+                Err(e) => {
+                    println!("debug: error: '{}', line with parse error: '{}'", e, sample);
+                    return Err(ProfError::RegexError)
+                },
             };
 
             data_vec.push(data_row);
