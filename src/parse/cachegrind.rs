@@ -1,6 +1,5 @@
 extern crate ndarray;
 extern crate regex;
-extern crate itertools;
 
 use std::process::Command;
 use self::ndarray::{Axis, stack, OwnedArray, ArrayView, Ix};
@@ -9,7 +8,6 @@ use std::cmp::Ordering::Less;
 use err::ProfError;
 use regex::Regex;
 use std::ffi::OsStr;
-use self::itertools::Itertools;
 
 /// initialize matrix object
 pub type Mat<A> = OwnedArray<A, (Ix, Ix)>;
