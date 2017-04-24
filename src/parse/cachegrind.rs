@@ -1,5 +1,6 @@
 extern crate ndarray;
 extern crate regex;
+extern crate itertools;
 
 use std::process::Command;
 use self::ndarray::{Axis, stack, OwnedArray, ArrayView, Ix};
@@ -8,6 +9,7 @@ use std::cmp::Ordering::Less;
 use err::ProfError;
 use regex::Regex;
 use std::ffi::OsStr;
+use self::itertools::Itertools;
 
 /// initialize matrix object
 pub type Mat<A> = OwnedArray<A, (Ix, Ix)>;
@@ -70,11 +72,12 @@ impl CacheGrindParser for Profiler {
                                     .output()
                                     .or(Err(ProfError::CliError));
 
-        cachegrind_output.and_then(|x| String::from_utf8(x.stdout).or(Err(ProfError::UTF8Error)))
-                         .or(Err(ProfError::CliError))
-
-
+        cachegrind_output
+            .and_then(|x| String::from_utf8(x.stdout).or(Err(ProfError::UTF8Error)))
+            .or(Err(ProfError::CliError))
     }
+
+
     // Get parse the profiler output into respective structs.
     fn cachegrind_parse<'b>(&'b self,
                             output: &'b str,
@@ -109,11 +112,16 @@ impl CacheGrindParser for Profiler {
         // loop through each line and get numbers + func
         for sample in out_split.iter() {
 
+            println!("line: {}", sample);
+
+
             // trim the sample, split by whitespace to separate out each data point
             // (numbers + func)
+
             let mut elems = sample.trim()
-                                  .split(" ")
-                                  .collect::<Vec<&'b str>>();
+                .split(" ")
+                .collect::<Vec<&'b str>>();
+
             // remove any empty strings
             elems.retain(|x| x.to_string() != "");
 
@@ -121,7 +129,8 @@ impl CacheGrindParser for Profiler {
             // data_elems is the function file path.
             let mut numbers = Vec::new();
 
-            for elem in elems[0..elems.len() - 1].iter() {
+            for elem in elems[0..9].iter() {
+                println!("  {}", elem);
                 let number = match elem.trim().replace(",", "").parse::<f64>() {
                     Ok(n) => n,
                     Err(_) => return Err(ProfError::RegexError),
@@ -136,10 +145,13 @@ impl CacheGrindParser for Profiler {
             if let Ok(data_col) = OwnedArray::from_shape_vec((numbers.len(), 1), numbers) {
                 data_vec.push(data_col);
             }
-            // the last element in data_elems is the function file path.
+            // the elements after the 9 data_elems is the function file path.
             // get the file in the file-path (which includes the function) and push that to
             // the funcs vector.
-            let path = elems[elems.len() - 1].split("/").collect::<Vec<&'b str>>();
+            let first_char_of_path = sample.find(elems[9]).unwrap();
+            let (_, function_path) = sample.split_at(first_char_of_path);
+            let path = function_path.split("/")
+                .collect::<Vec<&'b str>>();
             let func = path[path.len() - 1];
 
             let mut func = COMPILER_TRASH.replace_all(func, "");
