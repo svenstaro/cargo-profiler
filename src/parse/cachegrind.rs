@@ -110,9 +110,6 @@ impl CacheGrindParser for Profiler {
         // loop through each line and get numbers + func
         for sample in out_split.iter() {
 
-            println!("line: {}", sample);
-
-
             // trim the sample, split by whitespace to separate out each data point
             // (numbers + func)
 
@@ -128,7 +125,6 @@ impl CacheGrindParser for Profiler {
             let mut numbers = Vec::new();
 
             for elem in elems[0..9].iter() {
-                println!("  {}", elem);
                 let number = match elem.trim().replace(",", "").parse::<f64>() {
                     Ok(n) => n,
                     Err(_) => return Err(ProfError::RegexError),
@@ -158,10 +154,6 @@ impl CacheGrindParser for Profiler {
             funcs.push(func);
 
         }
-
-
-
-
 
 
         // stack all the 1 x 9 matrices in data to a n x 9  matrix.
