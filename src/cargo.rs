@@ -1,4 +1,4 @@
-extern crate rustc_serialize;
+extern crate serde_json;
 
 use std::env;
 use std::fs;
@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use err::ProfError;
 use std::process::Command;
 use std::path::Path;
-use self::rustc_serialize::json::Json;
+use self::serde_json::Value;
 
 /// Returns the closest ancestor path containing a `target` directory.
 ///
@@ -48,21 +48,14 @@ pub fn get_package_name() -> Result<String, ProfError> {
                        .output()
                        .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
 
-
     let out = String::from_utf8(manifest.stdout).unwrap_or("".to_string());
-    let data = Json::from_str(&out).or(Err(ProfError::ReadManifestError));
+    let data: Value = serde_json::from_str(&out).or(Err(ProfError::ReadManifestError))?;
 
-
-    data.and_then(|x| {
-        x.as_object()
+        data.as_object()
          .expect("Could not extract object from read manifest JSON. Please submit bug.")
          .get("name")
          .ok_or(ProfError::NoNameError)
          .and_then(|x| Ok(x.to_string().replace("\"", "")))
-    })
-
-
-
 }
 
 // build the binary by calling cargo build

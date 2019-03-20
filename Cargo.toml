@@ -13,12 +13,6 @@ clap = "2.5.1"
 regex = "1"
 ndarray = "0.12"
 lazy_static = "0.2.1"
-rustc-serialize = "0.3"
-
-[lib]
-name="profiler"
-lib="src/lib.rs"
-
-[[bin]]
-name = "cargo-profiler"
-bin='src/main.rs'
+structopt = "0.2.15"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
