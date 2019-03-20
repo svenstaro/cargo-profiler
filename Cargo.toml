@@ -1,12 +1,12 @@
 [package]
-version = "0.1.5"
-authors = ["pegasos1"]
-description = "Cargo subcommand to profile your applications."
-homepage = "http://github.com/pegasos1/cargo-profiler"
-repository = "http://github.com/pegasos1/cargo-profiler"
-license = "Apache-2.0"
-keywords = ["cargo", "profiler", "subcommand", "valgrind", "performance"]
 name = "cargo-profiler"
+version = "0.2.0"
+authors = ["pegasos1", "Sven-Hendrik Haase <svenstaro@gmail.com>"]
+description = "Cargo subcommand to profile your applications."
+homepage = "http://github.com/svenstaro/cargo-profiler"
+repository = "http://github.com/svenstaro/cargo-profiler"
+license = "MIT"
+keywords = ["cargo", "profiler", "subcommand", "valgrind", "performance"]
 
 [dependencies]
 clap = "2.5.1"
