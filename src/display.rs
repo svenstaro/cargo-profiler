@@ -72,18 +72,18 @@ impl fmt::Display for Profiler {
                     fmt_thousands_sep(dlmr + dlmw, ','),
                     fmt_thousands_sep((dlmr + dlmw) / (ir + dr + dw) * 100., ','),
                 );
-                let _ = write!(
+                let _ = writeln!(
                     f,
                     " \x1b[1;36mIr  \x1b[1;36mI1mr \x1b[1;36mILmr  \x1b[1;36mDr  \
                      \x1b[1;36mD1mr \x1b[1;36mDLmr  \x1b[1;36mDw  \x1b[1;36mD1mw \
-                     \x1b[1;36mDLmw\n"
+                     \x1b[1;36mDLmw"
                 );
 
                 for (ref x, y) in data.axis_iter(Axis(0)).zip(functs.iter()) {
-                    let _ = write!(
+                    let _ = writeln!(
                         f,
                         "\x1b[0m{:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} {:.2} \
-                         {}\n",
+                         {}",
                         x[0] / ir,
                         x[1] / i1mr,
                         x[2] / ilmr,
@@ -116,9 +116,9 @@ impl fmt::Display for Profiler {
                         let perc = x / total_instructions * 100.;
                         match perc {
                             t if t >= 50.0 => {
-                                let _ = write!(
+                                let _ = writeln!(
                                     f,
-                                    "{} (\x1b[31m{:.1}%\x1b[0m)\x1b[0m {}\n",
+                                    "{} (\x1b[31m{:.1}%\x1b[0m)\x1b[0m {}",
                                     fmt_thousands_sep(x, ','),
                                     t,
                                     y
@@ -126,9 +126,9 @@ impl fmt::Display for Profiler {
                                 println!("{}", DASHES);
                             }
                             t if (t >= 30.0) & (t < 50.0) => {
-                                let _ = write!(
+                                let _ = writeln!(
                                     f,
-                                    "{} (\x1b[33m{:.1}%\x1b[0m)\x1b[0m {}\n",
+                                    "{} (\x1b[33m{:.1}%\x1b[0m)\x1b[0m {}",
                                     fmt_thousands_sep(x, ','),
                                     t,
                                     y
@@ -136,9 +136,9 @@ impl fmt::Display for Profiler {
                                 println!("{}", DASHES);
                             }
                             _ => {
-                                let _ = write!(
+                                let _ = writeln!(
                                     f,
-                                    "{} (\x1b[32m{:.1}%\x1b[0m)\x1b[0m {}\n",
+                                    "{} (\x1b[32m{:.1}%\x1b[0m)\x1b[0m {}",
                                     fmt_thousands_sep(x, ','),
                                     x / total_instructions * 100.,
                                     y

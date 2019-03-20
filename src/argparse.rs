@@ -28,7 +28,7 @@ pub fn get_binary<'a>(matches: &'a ArgMatches) -> Result<&'a str, ProfError> {
             if !Path::new(z).exists() {
                 return Err(ProfError::InvalidBinary);
             }
-            return Ok(z);
+            Ok(z)
         }
         None => Err(ProfError::InvalidBinary),
     }

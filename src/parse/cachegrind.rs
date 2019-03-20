@@ -71,7 +71,7 @@ impl CacheGrindParser for Profiler {
         sort_metric: Metric,
     ) -> Result<Profiler, ProfError> {
         // split output line-by-line
-        let mut out_split: Vec<&'b str> = output.split("\n").collect();
+        let mut out_split: Vec<&'b str> = output.split('\n').collect();
 
         // regex identifies lines that start with digits and have characters that commonly
         // show up in file paths
@@ -90,7 +90,7 @@ impl CacheGrindParser for Profiler {
             .filter(|x| ERROR_REGEX.is_match(x))
             .collect::<Vec<_>>();
 
-        if errs.len() > 0 {
+        if !errs.is_empty() {
             return Err(ProfError::OutOfMemoryError);
         }
 
@@ -103,9 +103,9 @@ impl CacheGrindParser for Profiler {
         for sample in out_split.iter() {
             // trim the sample, split by whitespace to separate out each data point
             // (numbers + func)
-            let mut elems = sample.trim().split(" ").collect::<Vec<&'b str>>();
+            let mut elems = sample.trim().split(' ').collect::<Vec<&'b str>>();
             // remove any empty strings
-            elems.retain(|x| x.to_string() != "");
+            elems.retain(|x| x != &"");
 
             // for each number, remove any commas and parse into f64. the last element in
             // data_elems is the function file path.
@@ -128,11 +128,11 @@ impl CacheGrindParser for Profiler {
             // the last element in data_elems is the function file path.
             // get the file in the file-path (which includes the function) and push that to
             // the funcs vector.
-            let path = elems[elems.len() - 1].split("/").collect::<Vec<&'b str>>();
+            let path = elems[elems.len() - 1].split('/').collect::<Vec<&'b str>>();
             let func = path[path.len() - 1];
 
             let mut func = COMPILER_TRASH.replace_all(func, "");
-            let idx = func.rfind("::").unwrap_or(func.len());
+            let idx = func.rfind("::").unwrap_or_else(|| func.len());
             func.to_mut().drain(idx..).collect::<String>();
             funcs.push(func.into_owned());
         }
@@ -197,15 +197,15 @@ impl CacheGrindParser for Profiler {
 
         // put all data in cachegrind struct!
         Ok(Profiler::CacheGrind {
-            ir: ir,
-            i1mr: i1mr,
-            ilmr: ilmr,
-            dr: dr,
-            d1mr: d1mr,
-            dlmr: dlmr,
-            dw: dw,
-            d1mw: d1mw,
-            dlmw: dlmw,
+            ir,
+            i1mr,
+            ilmr,
+            dr,
+            d1mr,
+            dlmr,
+            dw,
+            d1mw,
+            dlmw,
             data: sorted_data_matrix,
             functs: sorted_funcs,
         })

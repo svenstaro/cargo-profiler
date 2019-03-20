@@ -36,7 +36,7 @@ impl CallGrindParser for Profiler {
 
     fn callgrind_parse<'b>(&'b self, output: &'b str, num: usize) -> Result<Profiler, ProfError> {
         // split output line-by-line
-        let mut out_split = output.split("\n").collect::<Vec<_>>();
+        let mut out_split = output.split('\n').collect::<Vec<_>>();
 
         // regex identifies lines that start with digits and have characters that commonly
         // show up in file paths
@@ -52,7 +52,7 @@ impl CallGrindParser for Profiler {
             .into_iter()
             .filter(|x| ERROR_REGEX.is_match(x))
             .collect::<Vec<_>>();
-        if errs.len() > 0 {
+        if !errs.is_empty() {
             return Err(ProfError::OutOfMemoryError);
         }
 
@@ -78,11 +78,11 @@ impl CallGrindParser for Profiler {
 
             // the function has some trailing whitespace and trash. remove that, and
             // get the function, push to functs vector.
-            let path = elems[1].split(" ").collect::<Vec<_>>();
-            let cleaned_path = path[0].split("/").collect::<Vec<_>>();
+            let path = elems[1].split(' ').collect::<Vec<_>>();
+            let cleaned_path = path[0].split('/').collect::<Vec<_>>();
             let func = cleaned_path[cleaned_path.len() - 1];
             let mut func = COMPILER_TRASH.replace_all(func, "..");
-            let idx = func.rfind("::").unwrap_or(func.len());
+            let idx = func.rfind("::").unwrap_or_else(|| func.len());
             func.to_mut().drain(idx..).collect::<String>();
             funcs.push(func.into_owned())
         }
@@ -99,7 +99,7 @@ impl CallGrindParser for Profiler {
         }
         // put all data in cachegrind struct!
         Ok(Profiler::CallGrind {
-            total_instructions: total_instructions,
+            total_instructions,
             instructions: data_vec,
             functs: funcs,
         })

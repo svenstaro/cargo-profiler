@@ -25,7 +25,7 @@ pub fn find_target() -> Option<PathBuf> {
     // From the current directory we work our way up, looking for `Cargo.toml`
     env::current_dir().ok().and_then(|mut wd| {
         for _ in 0..10 {
-            if contains_manifest(&mut wd) {
+            if contains_manifest(&wd) {
                 return Some(wd);
             }
             if !wd.pop() {
@@ -45,7 +45,7 @@ pub fn get_package_name() -> Result<String, ProfError> {
         .output()
         .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
 
-    let out = String::from_utf8(manifest.stdout).unwrap_or("".to_string());
+    let out = String::from_utf8(manifest.stdout).unwrap_or_default();
     let data: Value = serde_json::from_str(&out).or(Err(ProfError::ReadManifestError))?;
 
     data.as_object()
@@ -60,35 +60,32 @@ pub fn get_package_name() -> Result<String, ProfError> {
 pub fn build_binary(release: bool) -> Result<String, ProfError> {
     let package_name = get_package_name()?;
 
-    let (out, binary_dir) = match release {
-        true => {
-            println!(
-                "\n\x1b[1;33mCompiling \x1b[1;0m{} in release mode...",
-                package_name
-            );
+    let (out, binary_dir) = if release {
+        println!(
+            "\n\x1b[1;33mCompiling \x1b[1;0m{} in release mode...",
+            package_name
+        );
 
-            (
-                Command::new("cargo")
-                    .args(&["build", "--release"])
-                    .output()
-                    .unwrap_or_else(|e| panic!("failed to execute process: {}", e)),
-                "/target/release/",
-            )
-        }
-        false => {
-            println!(
-                "\n\x1b[1;33mCompiling \x1b[1;0m{} in debug mode...",
-                package_name
-            );
+        (
+            Command::new("cargo")
+                .args(&["build", "--release"])
+                .output()
+                .unwrap_or_else(|e| panic!("failed to execute process: {}", e)),
+            "/target/release/",
+        )
+    } else {
+        println!(
+            "\n\x1b[1;33mCompiling \x1b[1;0m{} in debug mode...",
+            package_name
+        );
 
-            (
-                Command::new("cargo")
-                    .arg("build")
-                    .output()
-                    .unwrap_or_else(|e| panic!("failed to execute process: {}", e)),
-                "/target/debug/",
-            )
-        }
+        (
+            Command::new("cargo")
+                .arg("build")
+                .output()
+                .unwrap_or_else(|e| panic!("failed to execute process: {}", e)),
+            "/target/debug/",
+        )
     };
 
     let target_dir = find_target()
@@ -100,12 +97,12 @@ pub fn build_binary(release: bool) -> Result<String, ProfError> {
         });
     let path = target_dir
         .and_then(|x| Ok(x + binary_dir + &package_name))
-        .unwrap_or("".to_string());
+        .unwrap_or_default();
 
     if !Path::new(&path).exists() {
         return Err(ProfError::CompilationError(
             package_name.to_string(),
-            String::from_utf8(out.stderr).unwrap_or("".to_string()),
+            String::from_utf8(out.stderr).unwrap_or_default(),
         ));
     }
     Ok(path)
