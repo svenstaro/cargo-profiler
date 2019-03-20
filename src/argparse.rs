@@ -1,24 +1,21 @@
-use clap::ArgMatches;
-use crate::profiler::Profiler;
-use crate::parse::cachegrind::Metric;
 use crate::err::ProfError;
+use crate::parse::cachegrind::Metric;
+use crate::profiler::Profiler;
+use clap::ArgMatches;
 use std::path::Path;
 
 /// match the profiler argument
-pub fn get_profiler<'a>(matches: &'a ArgMatches)
-                        -> Result<(&'a ArgMatches<'a>, Profiler), ProfError> {
+pub fn get_profiler<'a>(
+    matches: &'a ArgMatches,
+) -> Result<(&'a ArgMatches<'a>, Profiler), ProfError> {
     match matches.subcommand_matches("profiler") {
-        Some(matches) => {
-            match matches.subcommand_matches("callgrind") {
-                Some(matches) => Ok((matches, Profiler::new_callgrind())),
-                None => {
-                    match matches.subcommand_matches("cachegrind") {
-                        Some(matches) => Ok((matches, Profiler::new_cachegrind())),
-                        None => Err(ProfError::InvalidProfiler),
-                    }
-                }
-            }
-        }
+        Some(matches) => match matches.subcommand_matches("callgrind") {
+            Some(matches) => Ok((matches, Profiler::new_callgrind())),
+            None => match matches.subcommand_matches("cachegrind") {
+                Some(matches) => Ok((matches, Profiler::new_cachegrind())),
+                None => Err(ProfError::InvalidProfiler),
+            },
+        },
         None => Err(ProfError::InvalidProfiler),
     }
 }
@@ -35,19 +32,15 @@ pub fn get_binary<'a>(matches: &'a ArgMatches) -> Result<&'a str, ProfError> {
         }
         None => Err(ProfError::InvalidBinary),
     }
-
-
 }
 
 /// parse the number argument into a usize
 pub fn get_num(matches: &ArgMatches) -> Result<usize, ProfError> {
-
     match matches.value_of("n").map(|x| x.parse::<usize>()) {
         Some(Ok(z)) => Ok(z),
         Some(Err(_)) => Err(ProfError::InvalidNum),
         None => Ok(10000), // some arbitrarily large number...
     }
-
 }
 
 /// get the cachegrind metric user wants to sort on

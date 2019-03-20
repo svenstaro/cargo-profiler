@@ -1,9 +1,9 @@
-use std::process::Command;
-use crate::profiler::Profiler;
 use crate::err::ProfError;
+use crate::profiler::Profiler;
+use lazy_static::lazy_static;
 use regex::Regex;
 use std::ffi::OsStr;
-use lazy_static::lazy_static;
+use std::process::Command;
 
 // Parser trait. To parse the output of Profilers, we first have to get their output from
 // the command line, and then parse the output into respective structs.
@@ -12,11 +12,9 @@ pub trait CallGrindParser {
     fn callgrind_parse<'b>(&'b self, output: &'b str, num: usize) -> Result<Profiler, ProfError>;
 }
 
-
 impl CallGrindParser for Profiler {
     // Get profiler output from stdout.
     fn callgrind_cli(&self, binary: &str, binargs: &[&OsStr]) -> Result<String, ProfError> {
-
         // get callgrind cli output from stdout
         Command::new("valgrind")
             .arg("--tool=callgrind")
@@ -27,39 +25,38 @@ impl CallGrindParser for Profiler {
             .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
 
         let cachegrind_output = Command::new("callgrind_annotate")
-                                    .arg("callgrind.out")
-                                    .arg(binary)
-                                    .output()
-                                    .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
+            .arg("callgrind.out")
+            .arg(binary)
+            .output()
+            .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
 
         Ok(String::from_utf8(cachegrind_output.stdout)
-               .expect("error while returning cachegrind stdout"))
-
+            .expect("error while returning cachegrind stdout"))
     }
 
     fn callgrind_parse<'b>(&'b self, output: &'b str, num: usize) -> Result<Profiler, ProfError> {
-
         // split output line-by-line
         let mut out_split = output.split("\n").collect::<Vec<_>>();
 
         // regex identifies lines that start with digits and have characters that commonly
         // show up in file paths
         lazy_static! {
-           static ref CALLGRIND_REGEX : Regex = Regex::new(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*@*-*|\d+\s*[a-zA-Z]*$*_*\?+:*/*\.*-*@*-*").unwrap();
-           static ref COMPILER_TRASH: Regex = Regex::new(r"\$\w{2}\$|\$\w{3}\$").unwrap();
-           static ref ERROR_REGEX : Regex = Regex::new(r"out of memory").unwrap();
-
-       }
-        let errs = out_split.to_owned()
-                            .into_iter()
-                            .filter(|x| ERROR_REGEX.is_match(x))
-                            .collect::<Vec<_>>();
+            static ref CALLGRIND_REGEX: Regex =
+                Regex::new(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*@*-*|\d+\s*[a-zA-Z]*$*_*\?+:*/*\.*-*@*-*")
+                    .unwrap();
+            static ref COMPILER_TRASH: Regex = Regex::new(r"\$\w{2}\$|\$\w{3}\$").unwrap();
+            static ref ERROR_REGEX: Regex = Regex::new(r"out of memory").unwrap();
+        }
+        let errs = out_split
+            .to_owned()
+            .into_iter()
+            .filter(|x| ERROR_REGEX.is_match(x))
+            .collect::<Vec<_>>();
         if errs.len() > 0 {
             return Err(ProfError::OutOfMemoryError);
         }
 
         out_split.retain(|x| CALLGRIND_REGEX.is_match(x));
-
 
         let mut funcs: Vec<String> = Vec::new();
         let mut data_vec: Vec<f64> = Vec::new();
@@ -78,7 +75,6 @@ impl CallGrindParser for Profiler {
             };
 
             data_vec.push(data_row);
-
 
             // the function has some trailing whitespace and trash. remove that, and
             // get the function, push to functs vector.
@@ -112,8 +108,8 @@ impl CallGrindParser for Profiler {
 
 #[cfg(test)]
 mod test {
-    use profiler::Profiler;
     use super::CallGrindParser;
+    use profiler::Profiler;
     #[test]
     fn test_callgrind_parse_1() {
         let output = "==6072==     Valgrind's memory management: out of memory:\n ==6072==     \

@@ -1,10 +1,10 @@
+use crate::err::ProfError;
+use serde_json::Value;
 use std::env;
 use std::fs;
-use std::path::PathBuf;
-use crate::err::ProfError;
-use std::process::Command;
-use serde_json::Value;
 use std::path::Path;
+use std::path::PathBuf;
+use std::process::Command;
 
 /// Returns the closest ancestor path containing a `target` directory.
 ///
@@ -15,8 +15,9 @@ pub fn find_target() -> Option<PathBuf> {
     fn contains_manifest(path: &PathBuf) -> bool {
         fs::read_dir(path)
             .map(|entries| {
-                entries.filter_map(|res| res.ok())
-                       .any(|ent| ent.path().ends_with("target"))
+                entries
+                    .filter_map(|res| res.ok())
+                    .any(|ent| ent.path().ends_with("target"))
             })
             .unwrap_or(false)
     }
@@ -36,24 +37,22 @@ pub fn find_target() -> Option<PathBuf> {
     })
 }
 
-
 // returns the name of the package parsed from Cargo.toml
 // this will only work if the package name is directly underneath [package] tag
 pub fn get_package_name() -> Result<String, ProfError> {
-
     let manifest = Command::new("cargo")
-                       .arg("read-manifest")
-                       .output()
-                       .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
+        .arg("read-manifest")
+        .output()
+        .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
 
     let out = String::from_utf8(manifest.stdout).unwrap_or("".to_string());
     let data: Value = serde_json::from_str(&out).or(Err(ProfError::ReadManifestError))?;
 
-        data.as_object()
-         .expect("Could not extract object from read manifest JSON. Please submit bug.")
-         .get("name")
-         .ok_or(ProfError::NoNameError)
-         .and_then(|x| Ok(x.to_string().replace("\"", "")))
+    data.as_object()
+        .expect("Could not extract object from read manifest JSON. Please submit bug.")
+        .get("name")
+        .ok_or(ProfError::NoNameError)
+        .and_then(|x| Ok(x.to_string().replace("\"", "")))
 }
 
 // build the binary by calling cargo build
@@ -63,42 +62,51 @@ pub fn build_binary(release: bool) -> Result<String, ProfError> {
 
     let (out, binary_dir) = match release {
         true => {
-            println!("\n\x1b[1;33mCompiling \x1b[1;0m{} in release mode...",
-                     package_name);
+            println!(
+                "\n\x1b[1;33mCompiling \x1b[1;0m{} in release mode...",
+                package_name
+            );
 
-            (Command::new("cargo")
-                 .args(&["build", "--release"])
-                 .output()
-                 .unwrap_or_else(|e| panic!("failed to execute process: {}", e)),
-             "/target/release/")
+            (
+                Command::new("cargo")
+                    .args(&["build", "--release"])
+                    .output()
+                    .unwrap_or_else(|e| panic!("failed to execute process: {}", e)),
+                "/target/release/",
+            )
         }
         false => {
-            println!("\n\x1b[1;33mCompiling \x1b[1;0m{} in debug mode...",
-                     package_name);
+            println!(
+                "\n\x1b[1;33mCompiling \x1b[1;0m{} in debug mode...",
+                package_name
+            );
 
-            (Command::new("cargo")
-                 .arg("build")
-                 .output()
-                 .unwrap_or_else(|e| panic!("failed to execute process: {}", e)),
-             "/target/debug/")
+            (
+                Command::new("cargo")
+                    .arg("build")
+                    .output()
+                    .unwrap_or_else(|e| panic!("failed to execute process: {}", e)),
+                "/target/debug/",
+            )
         }
     };
 
-
     let target_dir = find_target()
-                         .ok_or(ProfError::NoTargetDirectory)
-                         .and_then(|x| {
-                             Ok(x.to_str()
-                                 .expect("target directory could not be converted to string.")
-                                 .to_string())
-                         });
-    let path = target_dir.and_then(|x| Ok(x + binary_dir + &package_name))
-                         .unwrap_or("".to_string());
+        .ok_or(ProfError::NoTargetDirectory)
+        .and_then(|x| {
+            Ok(x.to_str()
+                .expect("target directory could not be converted to string.")
+                .to_string())
+        });
+    let path = target_dir
+        .and_then(|x| Ok(x + binary_dir + &package_name))
+        .unwrap_or("".to_string());
 
     if !Path::new(&path).exists() {
-        return Err(ProfError::CompilationError(package_name.to_string(),
-                                               String::from_utf8(out.stderr)
-                                                   .unwrap_or("".to_string())));
+        return Err(ProfError::CompilationError(
+            package_name.to_string(),
+            String::from_utf8(out.stderr).unwrap_or("".to_string()),
+        ));
     }
     Ok(path)
 }

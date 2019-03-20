@@ -26,86 +26,85 @@ pub enum ProfError {
 impl fmt::Display for ProfError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            ProfError::RegexError => {
-                write!(f,
-                       "\x1b[1;31merror: \x1b[0mRegex error -- please file a bug. In bug report, \
-                        please include the original output file from profiler, e.g. from \
-                        valgrind --tool=cachegrind --cachegrind-out-file=cachegrind.txt")
-            }
-            ProfError::InvalidProfiler => {
-                write!(f,
-                       "\x1b[1;31merror: \x1b[0mInvalid profiler. cargo profiler currently \
-                        supports callgrind and cachegrind.")
-            }
-            ProfError::InvalidBinary => {
-                write!(f,
-                       "\x1b[1;31merror: \x1b[0mInvalid binary. make sure binary exists.")
-            }
-            ProfError::InvalidNum => {
-                write!(f,
-                       "\x1b[1;31merror: \x1b[0mInvalid number. make sure number is a positive \
-                        integer.")
-            }
-            ProfError::InvalidSortMetric => {
-                write!(f,
-                       "\x1b[1;31merror: \x1b[0mInvalid metric to sort on. available cachegrind \
-                        metrics are \nir, i1mr, ilmr, dr, d1mr, dlmr, dw, d1mw, and dlmw. Check \
-                        README for details on these metrics.")
-            }
-            ProfError::IOError(ref err) => {
-                write!(f,
-                       "\x1b[1;31merror: \x1b[0mIO error: {} -- please file a bug.",
-                       err)
-            }
-            ProfError::UTF8Error => {
-                write!(f,
-                       "\x1b[1;31merror: \x1b[0mCLI Utf8 error -- please file a bug.")
-            }
-            ProfError::MisalignedData => {
-                write!(f,
-                       "\x1b[1;31merror: \x1b[0mMisaligned data arrays due to regex error -- \
-                        please file a bug.")
-            }
-            ProfError::CompilationError(ref package_name, ref stderr) => {
-                write!(f,
-                       "\x1b[1;31merror: \x1b[0mFailed to compile {}.\n\n{}",
-                       package_name,
-                       stderr)
-            }
-            ProfError::TomlError => {
-                write!(f,
-                       "\x1b[1;31merror: \x1b[0mError in parsing Cargo.toml to derive package \
-                        name. Make sure package name is directly under [package] tag.")
-            }
-            ProfError::ReadManifestError => {
-                write!(f,
-                       "\x1b[1;31merror: \x1b[0mCargo.toml missing. Are you sure you're in a Rust \
-                        project?")
-            }
+            ProfError::RegexError => write!(
+                f,
+                "\x1b[1;31merror: \x1b[0mRegex error -- please file a bug. In bug report, \
+                 please include the original output file from profiler, e.g. from \
+                 valgrind --tool=cachegrind --cachegrind-out-file=cachegrind.txt"
+            ),
+            ProfError::InvalidProfiler => write!(
+                f,
+                "\x1b[1;31merror: \x1b[0mInvalid profiler. cargo profiler currently \
+                 supports callgrind and cachegrind."
+            ),
+            ProfError::InvalidBinary => write!(
+                f,
+                "\x1b[1;31merror: \x1b[0mInvalid binary. make sure binary exists."
+            ),
+            ProfError::InvalidNum => write!(
+                f,
+                "\x1b[1;31merror: \x1b[0mInvalid number. make sure number is a positive \
+                 integer."
+            ),
+            ProfError::InvalidSortMetric => write!(
+                f,
+                "\x1b[1;31merror: \x1b[0mInvalid metric to sort on. available cachegrind \
+                 metrics are \nir, i1mr, ilmr, dr, d1mr, dlmr, dw, d1mw, and dlmw. Check \
+                 README for details on these metrics."
+            ),
+            ProfError::IOError(ref err) => write!(
+                f,
+                "\x1b[1;31merror: \x1b[0mIO error: {} -- please file a bug.",
+                err
+            ),
+            ProfError::UTF8Error => write!(
+                f,
+                "\x1b[1;31merror: \x1b[0mCLI Utf8 error -- please file a bug."
+            ),
+            ProfError::MisalignedData => write!(
+                f,
+                "\x1b[1;31merror: \x1b[0mMisaligned data arrays due to regex error -- \
+                 please file a bug."
+            ),
+            ProfError::CompilationError(ref package_name, ref stderr) => write!(
+                f,
+                "\x1b[1;31merror: \x1b[0mFailed to compile {}.\n\n{}",
+                package_name, stderr
+            ),
+            ProfError::TomlError => write!(
+                f,
+                "\x1b[1;31merror: \x1b[0mError in parsing Cargo.toml to derive package \
+                 name. Make sure package name is directly under [package] tag."
+            ),
+            ProfError::ReadManifestError => write!(
+                f,
+                "\x1b[1;31merror: \x1b[0mCargo.toml missing. Are you sure you're in a Rust \
+                 project?"
+            ),
 
-            ProfError::NoNameError => {
-                write!(f,
-                       "\x1b[1;31merror: \x1b[0mNo package name found in Cargo.toml. Run \
-                        cargo read-manifest to make sure everything looks okay. Otherwise please \
-                        submit bug.")
-            }
+            ProfError::NoNameError => write!(
+                f,
+                "\x1b[1;31merror: \x1b[0mNo package name found in Cargo.toml. Run \
+                 cargo read-manifest to make sure everything looks okay. Otherwise please \
+                 submit bug."
+            ),
 
-            ProfError::NoTargetDirectory => {
-                write!(f,
-                       "\x1b[1;31merror: \x1b[0mNo target output directory found in project. \
-                        Binary must be in target/debug/ or target/release/, or specify binary \
-                        path explicitly with --bin argument.")
-            }
-            ProfError::OutOfMemoryError => {
-                write!(f,
-                       "\x1b[1;31merror: \x1b[0mValgrind's memory management: out of memory. \
-                        Valgrind cannot continue. Sorry. ")
-            }
-            ProfError::CliError => {
-                write!(f,
-                       "\x1b[1;31merror: \x1b[0mError in valgrind cli call. Make sure valgrind is \
-                        installed properly.")
-            }
+            ProfError::NoTargetDirectory => write!(
+                f,
+                "\x1b[1;31merror: \x1b[0mNo target output directory found in project. \
+                 Binary must be in target/debug/ or target/release/, or specify binary \
+                 path explicitly with --bin argument."
+            ),
+            ProfError::OutOfMemoryError => write!(
+                f,
+                "\x1b[1;31merror: \x1b[0mValgrind's memory management: out of memory. \
+                 Valgrind cannot continue. Sorry. "
+            ),
+            ProfError::CliError => write!(
+                f,
+                "\x1b[1;31merror: \x1b[0mError in valgrind cli call. Make sure valgrind is \
+                 installed properly."
+            ),
         }
     }
 }

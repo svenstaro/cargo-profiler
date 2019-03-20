@@ -1,4 +1,4 @@
-use ndarray::{Array2};
+use ndarray::Array2;
 use std::f64;
 
 // Profiler enum. We have two profilers: CacheGrind and CallGrind.
@@ -29,7 +29,6 @@ pub enum Profiler {
         functs: Vec<String>,
     },
 }
-
 
 // Initialize the Profilers
 impl Profiler {
