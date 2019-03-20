@@ -1,13 +1,11 @@
-extern crate ndarray;
-extern crate regex;
-
 use std::process::Command;
-use self::ndarray::{Axis, stack, Array, Array2, ArrayView, ArrayView1, Ix, Dimension};
-use profiler::Profiler;
+use ndarray::{Axis, stack, Array, Array2, ArrayView, ArrayView1, Ix, Dimension};
+use crate::profiler::Profiler;
 use std::cmp::Ordering::Less;
-use err::ProfError;
+use crate::err::ProfError;
 use regex::Regex;
 use std::ffi::OsStr;
+use lazy_static::lazy_static;
 
 /// define cachegrind metrics
 pub enum Metric {

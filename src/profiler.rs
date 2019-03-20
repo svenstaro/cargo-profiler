@@ -1,5 +1,4 @@
-extern crate ndarray;
-use self::ndarray::{Array, Array2, Ix};
+use ndarray::{Array2};
 use std::f64;
 
 // Profiler enum. We have two profilers: CacheGrind and CallGrind.

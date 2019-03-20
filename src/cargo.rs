@@ -1,12 +1,10 @@
-extern crate serde_json;
-
 use std::env;
 use std::fs;
 use std::path::PathBuf;
-use err::ProfError;
+use crate::err::ProfError;
 use std::process::Command;
+use serde_json::Value;
 use std::path::Path;
-use self::serde_json::Value;
 
 /// Returns the closest ancestor path containing a `target` directory.
 ///
@@ -61,7 +59,7 @@ pub fn get_package_name() -> Result<String, ProfError> {
 // build the binary by calling cargo build
 // return the path to the built binary
 pub fn build_binary(release: bool) -> Result<String, ProfError> {
-    let package_name = try!(get_package_name());
+    let package_name = get_package_name()?;
 
     let (out, binary_dir) = match release {
         true => {

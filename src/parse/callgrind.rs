@@ -1,10 +1,9 @@
-extern crate regex;
-
 use std::process::Command;
-use profiler::Profiler;
-use err::ProfError;
+use crate::profiler::Profiler;
+use crate::err::ProfError;
 use regex::Regex;
 use std::ffi::OsStr;
+use lazy_static::lazy_static;
 
 // Parser trait. To parse the output of Profilers, we first have to get their output from
 // the command line, and then parse the output into respective structs.

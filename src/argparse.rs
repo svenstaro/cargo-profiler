@@ -1,7 +1,7 @@
-use super::clap::ArgMatches;
-use profiler::Profiler;
-use parse::cachegrind::Metric;
-use err::ProfError;
+use clap::ArgMatches;
+use crate::profiler::Profiler;
+use crate::parse::cachegrind::Metric;
+use crate::err::ProfError;
 use std::path::Path;
 
 /// match the profiler argument

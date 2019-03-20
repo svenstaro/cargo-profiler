@@ -1,8 +1,6 @@
-extern crate ndarray;
-
 use std::fmt;
-use profiler::Profiler;
-use self::ndarray::Axis;
+use crate::profiler::Profiler;
+use ndarray::Axis;
 
 // pretty-print separator of functions
 static DASHES: &'static str = "-----------------------------------------------------------------------";

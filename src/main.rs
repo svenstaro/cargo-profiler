@@ -1,8 +1,3 @@
-#[macro_use]
-extern crate lazy_static;
-extern crate clap;
-extern crate regex;
-
 pub mod profiler;
 pub mod parse;
 pub mod display;
@@ -11,13 +6,13 @@ pub mod argparse;
 pub mod cargo;
 
 use clap::{Arg, App, SubCommand, AppSettings};
-use profiler::Profiler;
-use parse::callgrind::CallGrindParser;
-use parse::cachegrind::CacheGrindParser;
+use crate::profiler::Profiler;
+use crate::parse::callgrind::CallGrindParser;
+use crate::parse::cachegrind::CacheGrindParser;
 use std::process::Command;
-use err::ProfError;
-use argparse::{get_profiler, get_binary, get_num, get_sort_metric};
-use cargo::build_binary;
+use crate::err::ProfError;
+use crate::argparse::{get_profiler, get_binary, get_num, get_sort_metric};
+use crate::cargo::build_binary;
 use std::process;
 use std::ffi::OsStr;
 
@@ -144,8 +139,8 @@ fn real_main() -> Result<(), ProfError> {
 
     // get the profiler output
     let output = match profiler {
-        Profiler::CallGrind { .. } => try!(profiler.callgrind_cli(&binary, &binargs)),
-        Profiler::CacheGrind { .. } => try!(profiler.cachegrind_cli(&binary, &binargs)),
+        Profiler::CallGrind { .. } => profiler.callgrind_cli(&binary, &binargs)?,
+        Profiler::CacheGrind { .. } => profiler.cachegrind_cli(&binary, &binargs)?,
     };
 
     // parse the output into struct
@@ -163,14 +158,14 @@ fn real_main() -> Result<(), ProfError> {
     println!("{}", parsed);
 
     // remove files generated while profiling
-    try!(Command::new("rm")
+    Command::new("rm")
              .arg("cachegrind.out")
-             .output());
+             .output()?;
 
 
-    try!(Command::new("rm")
+    Command::new("rm")
              .arg("callgrind.out")
-             .output());
+             .output()?;
 
     Ok(())
 }
