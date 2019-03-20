@@ -2,15 +2,12 @@ extern crate ndarray;
 extern crate regex;
 
 use std::process::Command;
-use self::ndarray::{Axis, stack, OwnedArray, ArrayView, Ix};
+use self::ndarray::{Axis, stack, Array, Array2, ArrayView, ArrayView1, Ix, Dimension};
 use profiler::Profiler;
 use std::cmp::Ordering::Less;
 use err::ProfError;
 use regex::Regex;
 use std::ffi::OsStr;
-
-/// initialize matrix object
-pub type Mat<A> = OwnedArray<A, (Ix, Ix)>;
 
 /// define cachegrind metrics
 pub enum Metric {
@@ -28,7 +25,7 @@ pub enum Metric {
 
 
 /// Utility function for sorting a matrix. used to sort cachegrind data by particular metric (descending)
-pub fn sort_matrix(mat: &Mat<f64>, sort_col: ArrayView<f64, Ix>) -> (Mat<f64>, Vec<usize>) {
+pub fn sort_matrix(mat: &Array2<f64>, sort_col: ArrayView1<f64>) -> (Array2<f64>, Vec<usize>) {
     let mut enum_col = sort_col.iter().enumerate().collect::<Vec<(usize, &f64)>>();
     enum_col.sort_by(|a, &b| a.1.partial_cmp(b.1).unwrap_or(Less).reverse());
     let indices = enum_col.iter().map(|x| x.0).collect::<Vec<usize>>();
@@ -104,7 +101,7 @@ impl CacheGrindParser for Profiler {
         out_split.retain(|x| CACHEGRIND_REGEX.is_match(x));
 
         let mut funcs: Vec<String> = Vec::new();
-        let mut data_vec: Vec<Mat<f64>> = Vec::new();
+        let mut data_vec: Vec<Array2<f64>> = Vec::new();
 
         // loop through each line and get numbers + func
         for sample in out_split.iter() {
@@ -133,7 +130,7 @@ impl CacheGrindParser for Profiler {
 
             // reshape the vector of parsed numbers into a 1 x 9 matrix, and push the
             // matrix to our vector of 1 x 9 matrices.
-            if let Ok(data_col) = OwnedArray::from_shape_vec((numbers.len(), 1), numbers) {
+            if let Ok(data_col) = Array::from_shape_vec((numbers.len(), 1), numbers) {
                 data_vec.push(data_col);
             }
             // the last element in data_elems is the function file path.
@@ -144,8 +141,8 @@ impl CacheGrindParser for Profiler {
 
             let mut func = COMPILER_TRASH.replace_all(func, "");
             let idx = func.rfind("::").unwrap_or(func.len());
-            func.drain(idx..).collect::<String>();
-            funcs.push(func);
+            func.to_mut().drain(idx..).collect::<String>();
+            funcs.push(func.into_owned());
 
         }
 

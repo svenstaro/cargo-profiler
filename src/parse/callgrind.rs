@@ -66,8 +66,6 @@ impl CallGrindParser for Profiler {
         let mut data_vec: Vec<f64> = Vec::new();
         // loop through each line and get numbers + func
         for sample in out_split.iter() {
-
-
             // trim the sample, split by whitespace to separate out each data point
             // (numbers + func)
             let elems = sample.trim().split("  ").collect::<Vec<_>>();
@@ -90,9 +88,8 @@ impl CallGrindParser for Profiler {
             let func = cleaned_path[cleaned_path.len() - 1];
             let mut func = COMPILER_TRASH.replace_all(func, "..");
             let idx = func.rfind("::").unwrap_or(func.len());
-            func.drain(idx..).collect::<String>();
-            funcs.push(func)
-
+            func.to_mut().drain(idx..).collect::<String>();
+            funcs.push(func.into_owned())
         }
 
         // get the total instructions by summing the data vector.

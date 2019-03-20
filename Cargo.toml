@@ -10,8 +10,8 @@ keywords = ["cargo", "profiler", "subcommand", "valgrind", "performance"]
 
 [dependencies]
 clap = "2.5.1"
-regex = "0.1.69"
-ndarray = "0.5.1"
+regex = "1"
+ndarray = "0.12"
 lazy_static = "0.2.1"
 rustc-serialize = "0.3"
 

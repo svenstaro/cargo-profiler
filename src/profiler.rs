@@ -1,9 +1,6 @@
 extern crate ndarray;
-use self::ndarray::{OwnedArray, Ix};
+use self::ndarray::{Array, Array2, Ix};
 use std::f64;
-
-// initialize matrix object
-pub type Mat<A> = OwnedArray<A, (Ix, Ix)>;
 
 // Profiler enum. We have two profilers: CacheGrind and CallGrind.
 pub enum Profiler {
@@ -20,7 +17,7 @@ pub enum Profiler {
         dw: f64,
         d1mw: f64,
         dlmw: f64,
-        data: Mat<f64>,
+        data: Array2<f64>,
         functs: Vec<String>,
     },
 
@@ -60,7 +57,7 @@ impl Profiler {
             // total LL cache write misses
             dlmw: f64::NAN,
             // profiler data
-            data: OwnedArray::zeros((2, 2)),
+            data: Array2::zeros((2, 2)),
             // profiled functions in binary
             functs: Vec::new(),
         }
