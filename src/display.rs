@@ -57,7 +57,7 @@ impl fmt::Display for Profiler {
 
                     ",
 
-                       fmt_thousands_sep((ir + dr + dw), ','),
+                       fmt_thousands_sep(ir + dr + dw, ','),
                        fmt_thousands_sep(*i1mr, ','),
                        fmt_thousands_sep(i1mr / (ir + dr + dw) * 100., ','),
                        fmt_thousands_sep(*ilmr, ','),
