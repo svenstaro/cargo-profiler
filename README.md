@@ -56,6 +56,12 @@ after a `--`:
 $ cargo profiler callgrind --bin $PATH_TO_BINARY -- -a 3 --like this
 ```
 
+You can chose to keep the callgrind/cachegrind output files using the `--keep` option
+
+```
+$ cargo profiler callgrind --keep
+```
+
 You can limit the number of functions you'd like to look at:
 
 ```
