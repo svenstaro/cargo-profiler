@@ -109,7 +109,7 @@ impl CallGrindParser for Profiler {
 #[cfg(test)]
 mod test {
     use super::CallGrindParser;
-    use profiler::Profiler;
+    use crate::profiler::Profiler;
     #[test]
     fn test_callgrind_parse_1() {
         let output = "==6072==     Valgrind's memory management: out of memory:\n ==6072==     \

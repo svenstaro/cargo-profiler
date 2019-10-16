@@ -12,7 +12,7 @@ edition = "2018"
 [dependencies]
 clap = "2.5.1"
 regex = "1"
-ndarray = "0.12"
+ndarray = "0.13"
 lazy_static = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
