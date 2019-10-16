@@ -132,7 +132,7 @@ impl error::Error for ProfError {
         }
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             ProfError::RegexError => None,
             ProfError::InvalidProfiler => None,

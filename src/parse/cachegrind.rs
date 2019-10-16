@@ -189,7 +189,7 @@ impl CacheGrindParser for Profiler {
 
         // parse the limit argument n, and take the first n values of data matrix/funcs
         // vector accordingly.
-        if num < sorted_data_matrix.rows() {
+        if num < sorted_data_matrix.nrows() {
             let ls = (0..num).collect::<Vec<_>>();
             sorted_data_matrix = sorted_data_matrix.select(Axis(0), ls.as_slice());
             sorted_funcs = sorted_funcs.iter().take(num).cloned().collect();
