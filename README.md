@@ -5,7 +5,7 @@
 [![dependency status](https://deps.rs/repo/github/svenstaro/cargo-profiler/status.svg)](https://deps.rs/repo/github/svenstaro/cargo-profiler)
 [![license](http://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/svenstaro/cargo-profiler/blob/master/LICENSE)
 
-**Cargo subcommand to profile binaries.**
+**Cargo subcommand to profile binaries**
 
 ## To install
 
