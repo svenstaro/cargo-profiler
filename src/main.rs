@@ -1,4 +1,5 @@
 pub mod argparse;
+pub mod args;
 pub mod cargo;
 pub mod display;
 pub mod err;
@@ -15,6 +16,7 @@ use clap::{App, AppSettings, Arg, SubCommand};
 use std::ffi::OsStr;
 use std::process;
 use std::process::Command;
+use structopt::StructOpt;
 
 // macro to try something, but print custom error message and exit upon error.
 macro_rules! try_or_exit {
@@ -30,6 +32,7 @@ macro_rules! try_or_exit {
 }
 
 fn main() {
+    dbg!(args::CargoProfilerConfig::from_args());
     let _ = real_main();
 }
 
@@ -75,7 +78,6 @@ fn real_main() -> Result<(), ProfError> {
         .long("keep")
         .required(false)
         .help("keep profiler output files");
-
 
     // create callgrind subcommand
     let callgrind = SubCommand::with_name("callgrind")
