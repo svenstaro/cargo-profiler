@@ -70,6 +70,13 @@ fn real_main() -> Result<(), ProfError> {
         .takes_value(true)
         .help("metric you want to sort by");
 
+    // keep output files
+    let keep_arg = Arg::with_name("keep")
+        .long("keep")
+        .required(false)
+        .help("keep profiler output files");
+
+
     // create callgrind subcommand
     let callgrind = SubCommand::with_name("callgrind")
         .about("gets callgrind features")
@@ -78,7 +85,8 @@ fn real_main() -> Result<(), ProfError> {
         .arg(release.clone())
         .arg(binary_arg.clone())
         .arg(binargs_arg.clone())
-        .arg(fn_count_arg.clone());
+        .arg(fn_count_arg.clone())
+        .arg(keep_arg.clone());
 
     // create cachegrind subcommand
     let cachegrind = SubCommand::with_name("cachegrind")
@@ -89,7 +97,8 @@ fn real_main() -> Result<(), ProfError> {
         .arg(binary_arg)
         .arg(binargs_arg.clone())
         .arg(fn_count_arg)
-        .arg(sort_arg);
+        .arg(sort_arg)
+        .arg(keep_arg);
 
     // create profiler subcommand
     let profiler = SubCommand::with_name("profiler")
@@ -158,10 +167,12 @@ fn real_main() -> Result<(), ProfError> {
     // pretty-print
     println!("{}", parsed);
 
-    // remove files generated while profiling
-    Command::new("rm").arg("cachegrind.out").output()?;
+    if !m.is_present("keep") {
+        // remove files generated while profiling
+        Command::new("rm").arg("cachegrind.out").output()?;
 
-    Command::new("rm").arg("callgrind.out").output()?;
+        Command::new("rm").arg("callgrind.out").output()?;
+    }
 
     Ok(())
 }
