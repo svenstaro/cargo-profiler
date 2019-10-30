@@ -6,8 +6,10 @@ use regex::Regex;
 use std::cmp::Ordering::Less;
 use std::ffi::OsStr;
 use std::process::Command;
+use strum_macros::EnumString;
 
 /// define cachegrind metrics
+#[derive(Debug, Clone, EnumString)]
 pub enum Metric {
     Ir,
     I1mr,

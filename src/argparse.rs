@@ -34,15 +34,6 @@ pub fn get_binary<'a>(matches: &'a ArgMatches) -> Result<&'a str, ProfError> {
     }
 }
 
-/// parse the number argument into a usize
-pub fn get_num(matches: &ArgMatches) -> Result<usize, ProfError> {
-    match matches.value_of("n").map(|x| x.parse::<usize>()) {
-        Some(Ok(z)) => Ok(z),
-        Some(Err(_)) => Err(ProfError::InvalidNum),
-        None => Ok(10000), // some arbitrarily large number...
-    }
-}
-
 /// get the cachegrind metric user wants to sort on
 pub fn get_sort_metric(matches: &ArgMatches) -> Result<Metric, ProfError> {
     match matches.value_of("sort") {
@@ -70,11 +61,6 @@ mod test {
     #[test]
     fn test_get_binary() {
         assert_eq!(1, 1);
-        assert_eq!(1, 1);
-    }
-
-    #[test]
-    fn test_get_num() {
         assert_eq!(1, 1);
     }
 
