@@ -1,12 +1,12 @@
 use ndarray::Array2;
 use std::f64;
 
-// Profiler enum. We have two profilers: CacheGrind and CallGrind.
+// Profiler enum. We have two profilers: Cachegrind and Callgrind.
 pub enum Profiler {
-    // CachGrind holds the parsed objects of
+    // Cachgrind holds the parsed objects of
     // `valgrind --tool=cachegrind -cachegrind-out-file=cachegrind.out
     // && cg_annotate cachegrind.out`
-    CacheGrind {
+    Cachegrind {
         ir: f64,
         i1mr: f64,
         ilmr: f64,
@@ -23,7 +23,7 @@ pub enum Profiler {
     // Call holds the parsed objects of
     // `valgrind --tool=callgrind --callgrind-out-file=callgrind.out
     // && callgrind_annotate callgrind.out`
-    CallGrind {
+    Callgrind {
         total_instructions: f64,
         instructions: Vec<f64>,
         functs: Vec<String>,
@@ -32,10 +32,10 @@ pub enum Profiler {
 
 // Initialize the Profilers
 impl Profiler {
-    // Initialize CacheGrind
+    // Initialize Cachegrind
 
     pub fn new_cachegrind() -> Profiler {
-        Profiler::CacheGrind {
+        Profiler::Cachegrind {
             // total instructions
             ir: f64::NAN,
             // total instruction-cache read misses
@@ -60,9 +60,9 @@ impl Profiler {
             functs: Vec::new(),
         }
     }
-    // Initialize CallGrind
+    // Initialize Callgrind
     pub fn new_callgrind() -> Profiler {
-        Profiler::CallGrind {
+        Profiler::Callgrind {
             // total instruction calls
             total_instructions: f64::NAN,
             // instruction data

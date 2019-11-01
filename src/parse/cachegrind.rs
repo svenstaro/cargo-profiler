@@ -33,7 +33,7 @@ pub fn sort_matrix(mat: &Array2<f64>, sort_col: ArrayView1<f64>) -> (Array2<f64>
 
 /// Parser trait. To parse the output of Profilers, we first have to get their output from
 /// the command line, and then parse the output into respective structs.
-pub trait CacheGrindParser {
+pub trait CachegrindParser {
     fn cachegrind_cli(&self, binary: &str, binargs: &[&OsStr]) -> Result<String, ProfError>;
     fn cachegrind_parse<'b>(
         &'b self,
@@ -43,7 +43,7 @@ pub trait CacheGrindParser {
     ) -> Result<Profiler, ProfError>;
 }
 
-impl CacheGrindParser for Profiler {
+impl CachegrindParser for Profiler {
     /// Get profiler output from stdout.
     fn cachegrind_cli(&self, binary: &str, binargs: &[&OsStr]) -> Result<String, ProfError> {
         // get cachegrind cli output from stdout
@@ -198,7 +198,7 @@ impl CacheGrindParser for Profiler {
         }
 
         // put all data in cachegrind struct!
-        Ok(Profiler::CacheGrind {
+        Ok(Profiler::Cachegrind {
             ir,
             i1mr,
             ilmr,

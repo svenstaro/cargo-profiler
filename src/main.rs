@@ -9,9 +9,9 @@ pub mod profiler;
 use crate::argparse::{get_binary, get_profiler, get_sort_metric};
 use crate::cargo::build_binary;
 use crate::err::ProfError;
-use crate::parse::cachegrind::CacheGrindParser;
-use crate::parse::callgrind::CallGrindParser;
-use crate::profiler::Profiler;
+use crate::parse::cachegrind::CachegrindParser;
+use crate::parse::callgrind::CallgrindParser;
+use crate::args::ProfilerType;
 use clap::{App, AppSettings, Arg, SubCommand};
 use std::ffi::OsStr;
 use std::process;
@@ -21,19 +21,26 @@ use anyhow::Result;
 
 fn main() -> Result<()> {
     let args = args::CargoProfilerConfig::from_args();
-    dbg!(args);
 
-    // match args.profiler_type {
-    //     Profiler::CallGrind { .. } => println!(
-    //         "\n\x1b[1;33mProfiling \x1b[1;0m{} \x1b[0mwith callgrind\x1b[0m...",
-    //         binary_name
-    //     ),
-    //     Profiler::CacheGrind { .. } => println!(
-    //         "\n\x1b[1;33mProfiling \x1b[1;0m{} \x1b[0mwith cachegrind\x1b[0m...",
-    //         binary_name
-    //     ),
-    // };
-    //
+    // The way cargo extension programs are meant to be written requires us to always have a
+    // variant here that is the only one that'll ever be usd.
+    let profiler_type = if let args::CargoProfilerConfig::Profiler { profiler_type } = args {
+        profiler_type
+    } else {
+        unreachable!();
+    };
+
+    match profiler_type {
+        Profiler::Callgrind { .. } => println!(
+            "\n\x1b[1;33mProfiling \x1b[1;0m{} \x1b[0mwith callgrind\x1b[0m...",
+            binary_name
+        ),
+        Profiler::Cachegrind { .. } => println!(
+            "\n\x1b[1;33mProfiling \x1b[1;0m{} \x1b[0mwith cachegrind\x1b[0m...",
+            binary_name
+        ),
+    };
+
     // // parse arguments from cli call
     // let (m, profiler) = try_or_exit!(get_profiler(&matches));
     // let binary = {

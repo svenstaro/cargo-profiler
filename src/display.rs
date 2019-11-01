@@ -40,7 +40,7 @@ fn fmt_thousands_sep(n: f64, sep: char) -> String {
 impl fmt::Display for Profiler {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Profiler::CacheGrind {
+            Profiler::Cachegrind {
                 ref ir,
                 ref i1mr,
                 ref ilmr,
@@ -100,7 +100,7 @@ impl fmt::Display for Profiler {
                 Ok(())
             }
 
-            Profiler::CallGrind {
+            Profiler::Callgrind {
                 ref total_instructions,
                 ref instructions,
                 ref functs,

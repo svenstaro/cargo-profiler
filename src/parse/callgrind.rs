@@ -7,12 +7,12 @@ use std::process::Command;
 
 // Parser trait. To parse the output of Profilers, we first have to get their output from
 // the command line, and then parse the output into respective structs.
-pub trait CallGrindParser {
+pub trait CallgrindParser {
     fn callgrind_cli(&self, binary: &str, binargs: &[&OsStr]) -> Result<String, ProfError>;
     fn callgrind_parse<'b>(&'b self, output: &'b str, num: usize) -> Result<Profiler, ProfError>;
 }
 
-impl CallGrindParser for Profiler {
+impl CallgrindParser for Profiler {
     // Get profiler output from stdout.
     fn callgrind_cli(&self, binary: &str, binargs: &[&OsStr]) -> Result<String, ProfError> {
         // get callgrind cli output from stdout
@@ -98,7 +98,7 @@ impl CallGrindParser for Profiler {
             funcs = funcs.iter().take(num).cloned().collect();
         }
         // put all data in cachegrind struct!
-        Ok(Profiler::CallGrind {
+        Ok(Profiler::Callgrind {
             total_instructions,
             instructions: data_vec,
             functs: funcs,
@@ -108,7 +108,7 @@ impl CallGrindParser for Profiler {
 
 #[cfg(test)]
 mod test {
-    use super::CallGrindParser;
+    use super::CallgrindParser;
     use crate::profiler::Profiler;
     #[test]
     fn test_callgrind_parse_1() {
