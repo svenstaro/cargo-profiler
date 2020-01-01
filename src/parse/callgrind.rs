@@ -41,9 +41,11 @@ impl CallGrindParser for Profiler {
         // regex identifies lines that start with digits and have characters that commonly
         // show up in file paths
         lazy_static! {
-            static ref CALLGRIND_REGEX: Regex =
-                Regex::new(r"\d+\s*[a-zA-Z]*$*_*:*/+\.*@*-*|\d+\s*[a-zA-Z]*$*_*\?+:*/*\.*-*@*-*")
-                    .unwrap();
+            static ref CALLGRIND_REGEX: Regex = Regex::new(concat!(
+                r"(?:^\s*(?:\d{1,3})(?:,\d{3})*\s*[a-zA-Z0-9]*$*_*:*/+\.*@*-*)|",
+                r"(?:^\s*(?:\d{1,3})(?:,\d{3})*\s*[a-zA-Z0-9]*$*_*\?+:*/*\.*-*@*-*)"
+            ))
+            .unwrap();
             static ref COMPILER_TRASH: Regex = Regex::new(r"\$\w{2}\$|\$\w{3}\$").unwrap();
             static ref ERROR_REGEX: Regex = Regex::new(r"out of memory").unwrap();
         }
