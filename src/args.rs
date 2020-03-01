@@ -21,11 +21,11 @@ pub enum ProfilerType {
     Callgrind {
         /// Binary you want to profile
         #[structopt(name = "BIN", long)]
-        binary: Option<String>,
+        binary_name: String,
 
         /// Arguments for the binary
         #[structopt(name = "ARG")]
-        bin_args: Vec<String>,
+        binary_args: Vec<String>,
 
         /// Build binary in release mode
         #[structopt(long)]
@@ -43,11 +43,11 @@ pub enum ProfilerType {
     Cachegrind {
         /// Binary you want to profile
         #[structopt(name = "BIN", long)]
-        binary: Option<String>,
+        binary_name: String,
 
         /// Arguments for the binary
         #[structopt(name = "ARG")]
-        bin_args: Vec<String>,
+        binary_args: Vec<String>,
 
         /// Build binary in release mode
         #[structopt(long)]

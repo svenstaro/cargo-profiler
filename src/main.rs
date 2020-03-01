@@ -31,11 +31,11 @@ fn main() -> Result<()> {
     };
 
     match profiler_type {
-        Profiler::Callgrind { .. } => println!(
+        ProfilerType::Callgrind { binary_name, .. } => println!(
             "\n\x1b[1;33mProfiling \x1b[1;0m{} \x1b[0mwith callgrind\x1b[0m...",
             binary_name
         ),
-        Profiler::Cachegrind { .. } => println!(
+        ProfilerType::Cachegrind { binary_name, .. } => println!(
             "\n\x1b[1;33mProfiling \x1b[1;0m{} \x1b[0mwith cachegrind\x1b[0m...",
             binary_name
         ),
