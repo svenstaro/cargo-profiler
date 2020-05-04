@@ -1,18 +1,20 @@
 [package]
 name = "cargo-profiler"
 version = "0.2.0"
-authors = ["pegasos1", "Sven-Hendrik Haase <svenstaro@gmail.com>"]
+authors = ["Sven-Hendrik Haase <svenstaro@gmail.com>"]
 description = "Cargo subcommand to profile your applications."
 homepage = "http://github.com/svenstaro/cargo-profiler"
 repository = "http://github.com/svenstaro/cargo-profiler"
 license = "MIT"
-keywords = ["cargo", "profiler", "subcommand", "valgrind", "performance"]
+keywords = ["cargo", "profiler", "subcommand", "perf", "performance"]
 edition = "2018"
+categories = [
+    "command-line-utilities",
+    "development-tools",
+    "development-tools::cargo-plugins",
+]
 
 [dependencies]
-clap = "2.5.1"
-regex = "1"
-ndarray = "0.13"
-lazy_static = "1"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+structopt = "0.3"
+anyhow = "1.0"
+escargot = "0.5"

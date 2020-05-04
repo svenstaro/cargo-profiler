@@ -7,6 +7,19 @@
 
 **Cargo subcommand to profile binaries**
 
+
+
+
+
+# Also see
+
+cargo-flamegraph
+cargo-valgrind
+
+
+
+
+
 ## To install
 
 NOTE: This subcommand can only be used on Linux machines.
