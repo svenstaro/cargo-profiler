@@ -2,7 +2,6 @@
 
 [![Build Status](https://travis-ci.org/svenstaro/cargo-profiler.svg?branch=master)](https://travis-ci.org/svenstaro/cargo-profiler)
 [![Crates.io](https://img.shields.io/crates/v/cargo-profiler.svg)](https://crates.io/crates/cargo-profiler)
-[![dependency status](https://deps.rs/repo/github/svenstaro/cargo-profiler/status.svg)](https://deps.rs/repo/github/svenstaro/cargo-profiler)
 [![license](http://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/svenstaro/cargo-profiler/blob/master/LICENSE)
 
 **Cargo subcommand to profile binaries**
