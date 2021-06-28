@@ -6,22 +6,3 @@ updates:
     interval: daily
     time: "04:00"
   open-pull-requests-limit: 10
-  ignore:
-  - dependency-name: ndarray
-    versions:
-    - 0.14.0
-    - 0.15.0
-  - dependency-name: regex
-    versions:
-    - 1.4.3
-    - 1.4.4
-    - 1.4.5
-  - dependency-name: serde
-    versions:
-    - 1.0.123
-    - 1.0.124
-  - dependency-name: serde_json
-    versions:
-    - 1.0.61
-    - 1.0.62
-    - 1.0.63
