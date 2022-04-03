@@ -36,6 +36,9 @@ fn main() {
 // #[cfg(all(unix, any(target_os = "linux", target_os = "macos")))]
 #[cfg(unix)]
 fn real_main() -> Result<(), ProfError> {
+    let version = clap::crate_version!();
+    let authors = clap::crate_authors!(", ");
+
     // create binary path argument
     let binary_arg = Arg::with_name("binary")
         .long("bin")
@@ -80,8 +83,8 @@ fn real_main() -> Result<(), ProfError> {
     // create callgrind subcommand
     let callgrind = SubCommand::with_name("callgrind")
         .about("gets callgrind features")
-        .version("1.0")
-        .author("Suchin Gururangan")
+        .version(version)
+        .author(authors)
         .arg(release.clone())
         .arg(binary_arg.clone())
         .arg(binargs_arg.clone())
@@ -91,8 +94,8 @@ fn real_main() -> Result<(), ProfError> {
     // create cachegrind subcommand
     let cachegrind = SubCommand::with_name("cachegrind")
         .about("gets cachegrind features")
-        .version("1.0")
-        .author("Suchin Gururangan")
+        .version(version)
+        .author(authors)
         .arg(release)
         .arg(binary_arg)
         .arg(binargs_arg.clone())
@@ -103,8 +106,8 @@ fn real_main() -> Result<(), ProfError> {
     // create profiler subcommand
     let profiler = SubCommand::with_name("profiler")
         .about("gets callgrind features")
-        .version("1.0")
-        .author("Suchin Gururangan")
+        .version(version)
+        .author(authors)
         .subcommand(callgrind)
         .subcommand(cachegrind);
 
@@ -112,8 +115,8 @@ fn real_main() -> Result<(), ProfError> {
     let matches = App::new("cargo-profiler")
         .bin_name("cargo")
         .settings(&[AppSettings::SubcommandRequired])
-        .version("1.0")
-        .author("Suchin Gururangan")
+        .version(version)
+        .author(authors)
         .about("Profile your binaries")
         .subcommand(profiler)
         .get_matches();
