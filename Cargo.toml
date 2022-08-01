@@ -10,7 +10,7 @@ keywords = ["cargo", "profiler", "subcommand", "valgrind", "performance"]
 edition = "2018"
 
 [dependencies]
-clap = "2.5.1"
+clap = "3.2.16"
 regex = "1"
 ndarray = "0.13"
 lazy_static = "1"
